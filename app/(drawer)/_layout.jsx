@@ -12,14 +12,14 @@ function CustomDrawerContent(props) {
     <ScrollView style={styles.drawer}>
        <TouchableOpacity
         style={styles.drawerItem}
-        onPress={() => router.push('/(tabs)/checkin')}
+        onPress={() => router.push('(drawer)/(tabs)/checkin')}
       >
         <Ionicons name="home" size={18} color={Colors.cyan} />
         <Text style={styles.drawerLabel}>Home</Text>
       </TouchableOpacity>
       <TouchableOpacity
         style={styles.drawerItem}
-        onPress={() => router.push('/(tabs)/profile')}
+        onPress={() => router.push('(drawer)/(tabs)/profile')}
       >
         <Ionicons name="person" size={18} color={Colors.cyan} />
         <Text style={styles.drawerLabel}>PROFILE</Text>
@@ -27,7 +27,7 @@ function CustomDrawerContent(props) {
 
       <TouchableOpacity
         style={styles.drawerItem}
-        onPress={() => router.push('/(tabs)/')}
+        onPress={() => router.push('(drawer)/(tabs)/')}
       >
         <Ionicons name="people" size={18} color={Colors.cyan} />
         <Text style={styles.drawerLabel}>TEAM</Text>

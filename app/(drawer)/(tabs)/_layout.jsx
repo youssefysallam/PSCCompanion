@@ -48,7 +48,7 @@ export default function TabLayout() {
         options={{href: null}}
       />
       <Tabs.Screen
-        name="map"
+        name="map/index"
         options={{
           title: 'MAP',
           tabBarIcon: ({ color, size }) => (
@@ -56,6 +56,13 @@ export default function TabLayout() {
           ),
         }}
       />
+      {/* <Tabs.Screen name="map/_components/TeamMarker" options={{ href: null }} />
+      <Tabs.Screen name="map/_components/ICSBanner" options={{ href: null }} />
+      <Tabs.Screen name="map/_components/FilterPanel" options={{ href: null }} />
+      <Tabs.Screen name="map/_components/ManDownOverlay" options={{ href: null }} />
+      <Tabs.Screen name="map/_components/MapLegend" options={{ href: null }} />
+      <Tabs.Screen name="map/_components/useManDown" options={{ href: null }} />
+      <Tabs.Screen name="map/_components/mapHelpers" options={{ href: null }} /> */}
     </Tabs>
   );
 }
