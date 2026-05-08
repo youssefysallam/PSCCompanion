@@ -10,8 +10,10 @@ export default function RootLayout() {
       <GestureHandlerRootView style={{ flex: 1 }}>
         <StatusBar style="light" />
         <Stack screenOptions={{ headerShown: false }}>
-          {/* <Stack.Screen name="(tabs)" /> */}
-          {/*<Stack.Screen name="(drawer)" /> */} 
+          <Stack.Screen name="(drawer)" />
+          <Stack.Screen name="onboarding" options={{ headerShown: false }} />
+          <Stack.Screen name="tour" options={{ headerShown: false }} />
+          <Stack.Screen name="login" options={{ headerShown: false }} />
         </Stack>
       </GestureHandlerRootView>
     </AlertsProvider>

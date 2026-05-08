@@ -1,12 +1,3 @@
-/**
- * TeamMemberRow — Solo Leveling system UI style.
- * Urgent members get a glowing red left border.
- *
- * Props:
- *   member  (object) — { id, name, role, status, lastUpdate, signal, level }
- *   isLast  (bool)
- */
-
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Colors, StatusStyles } from '../../constants/colors';
@@ -19,11 +10,9 @@ export default function TeamMemberRow({ member, isLast = false }) {
     <View
       style={[
         styles.row,
-        isUrgent && styles.urgentRow,
         !isLast && styles.bordered,
       ]}
     >
-      {/* Urgent left glow bar */}
       {isUrgent && <View style={styles.urgentBar} />}
 
       <Avatar
@@ -56,19 +45,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     position: 'relative',
   },
-  urgentRow: {
-    backgroundColor: Colors.dangerFaint,
-  },
   urgentBar: {
     position: 'absolute',
     left: 0,
     top: 0,
     bottom: 0,
-    width: 2,
-    backgroundColor: Colors.danger,
+    width: 3,
+    backgroundColor: Colors.onScene,
   },
   bordered: {
-    borderBottomWidth: 1,
+    borderBottomWidth: 0.5,
     borderBottomColor: Colors.border,
   },
   info: {
@@ -76,16 +62,14 @@ const styles = StyleSheet.create({
     minWidth: 0,
   },
   name: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: Colors.textBright,
+    fontSize: 13,
+    fontWeight: '500',
+    color: Colors.text1,
   },
   detail: {
-    fontSize: 10,
-    color: Colors.textTertiary,
-    fontFamily: 'monospace',
+    fontSize: 11,
+    color: Colors.text3,
     marginTop: 2,
-    letterSpacing: 0.5,
   },
   trailing: {
     flexDirection: 'row',

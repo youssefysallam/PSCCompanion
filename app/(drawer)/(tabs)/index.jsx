@@ -1,200 +1,153 @@
-/**
- * Dashboard Screen (Team tab)
- * Owner: Youssef
- * Solo Leveling system UI — dark panels with glowing headers.
- */
-
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import React, { useState } from 'react';
-import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Modal, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, View } from 'react-native';
 import IncidentCard from '../../../components/dashboard/IncidentCard';
 import HamburgerButton from '../../../components/header/HamburgerButton';
 import { Colors, STATUS_SORT_ORDER, StatusStyles } from '../../../constants/colors';
 import { INCIDENTS, TEAM } from '../../../constants/mockData';
-/**
- * SystemPanelHeader — the ⓘ NOTIFICATION-style header
- * used on Solo Leveling quest/status panels.
- */
-function SystemPanelHeader({ title, color = Colors.cyan }) {
+
+function SectionHeader({ title, count }) {
   return (
-    <View style={[panelStyles.header, { borderBottomColor: color + '15' }]}>
-      <View style={[panelStyles.headerIcon, { borderColor: color }]}>
-        <Text style={[panelStyles.headerIconText, { color }]}>!</Text>
-      </View>
-      <Text style={[panelStyles.headerTitle, { color }]}>
-        {title}
-      </Text>
+    <View style={styles.sectionHeader}>
+      <Text style={styles.sectionTitle}>{title}</Text>
+      {count != null && (
+        <View style={styles.countPill}>
+          <Text style={styles.countText}>{count}</Text>
+        </View>
+      )}
     </View>
   );
 }
 
-const panelStyles = StyleSheet.create({
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    paddingVertical: 10,
-    paddingHorizontal: 14,
-    borderBottomWidth: 1,
-  },
-  headerIcon: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    borderWidth: 1.5,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  headerIconText: {
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  headerTitle: {
-    fontSize: 12,
-    fontWeight: '700',
-    fontFamily: 'monospace',
-    letterSpacing: 2.5,
-    textTransform: 'uppercase',
-  },
-});
+function TeamChip({ member }) {
+  const ms = StatusStyles[member.status] || StatusStyles.offline;
+  const isOffline = member.status === 'offline';
+  const initial = member.name.split(' ').pop()[0];
 
-/**
- * IncidentDetailOverlay — expanded detail view shown on tap.
- * Blurred backdrop, dismiss on outside tap.
- */
+  return (
+    <View style={[styles.chip, isOffline && styles.chipOffline]}>
+      <View style={styles.chipAvatarWrap}>
+        <View style={[styles.chipAvatar, { borderColor: isOffline ? Colors.border : ms.color }]}>
+          <Text style={[styles.chipInitial, { color: isOffline ? Colors.border : ms.color }]}>
+            {initial}
+          </Text>
+        </View>
+        <View style={[styles.chipDot, { backgroundColor: ms.color }]} />
+      </View>
+      <Text style={styles.chipName} numberOfLines={1}>{member.name.split(' ')[0]}</Text>
+      <Text style={styles.chipRole} numberOfLines={1}>{member.role}</Text>
+    </View>
+  );
+}
+
 function IncidentDetailOverlay({ incident, onClose }) {
   if (!incident) return null;
 
   const isHigh = incident.priority === 'high';
-  const color = isHigh ? Colors.danger : Colors.warning;
-  const bg = isHigh ? Colors.dangerFaint : Colors.warningFaint;
+  const color = isHigh ? Colors.onScene : Colors.enRoute;
 
   return (
     <Modal visible={true} transparent animationType="fade">
       <Pressable style={detailStyles.overlay} onPress={onClose}>
         <Pressable style={detailStyles.card} onPress={(e) => e.stopPropagation()}>
-          {/* Top glow line */}
-          <View style={[detailStyles.glowLine, { backgroundColor: color + '60' }]} />
-
-          {/* Close X button */}
           <Pressable style={detailStyles.closeButton} onPress={onClose}>
-            <Ionicons name="close" size={18} color={Colors.textTertiary} />
+            <Ionicons name="close" size={18} color={Colors.text3} />
           </Pressable>
 
-          {/* Scrollable content */}
           <ScrollView
             showsVerticalScrollIndicator={false}
             contentContainerStyle={detailStyles.scrollContent}
           >
-            {/* Header */}
             <View style={detailStyles.headerRow}>
-              <View style={[detailStyles.iconBox, { backgroundColor: bg, borderColor: color + '40' }]}>
-                <Ionicons name={isHigh ? 'flame' : 'medkit'} size={24} color={color} />
-              </View>
               <View style={detailStyles.headerInfo}>
-                <View style={[detailStyles.priorityBadge, { backgroundColor: bg, borderColor: color + '50' }]}>
-                  <Text style={[detailStyles.priorityText, { color }]}>
-                    {isHigh ? '! URGENT' : '◉ ACTIVE'}
-                  </Text>
-                </View>
+                <Text style={[detailStyles.priorityLabel, { color }]}>
+                  {isHigh ? 'Urgent' : 'Active'}
+                </Text>
                 <Text style={detailStyles.type}>{incident.type}</Text>
                 <Text style={detailStyles.id}>{incident.id}</Text>
               </View>
             </View>
 
-            {/* Quick stats row */}
             <View style={detailStyles.statsRow}>
               <View style={detailStyles.stat}>
-                <Ionicons name="time-outline" size={14} color={Colors.textTertiary} />
-                <Text style={detailStyles.statLabel}>TIME</Text>
+                <Text style={detailStyles.statLabel}>Time</Text>
                 <Text style={[detailStyles.statValue, { color }]}>{incident.time}</Text>
               </View>
-              <View style={[detailStyles.statDivider, { backgroundColor: color + '15' }]} />
+              <View style={detailStyles.statDivider} />
               <View style={detailStyles.stat}>
-                <Ionicons name="people-outline" size={14} color={Colors.textTertiary} />
-                <Text style={detailStyles.statLabel}>UNITS</Text>
+                <Text style={detailStyles.statLabel}>Units</Text>
                 <Text style={[detailStyles.statValue, { color }]}>{incident.units}</Text>
               </View>
-              <View style={[detailStyles.statDivider, { backgroundColor: color + '15' }]} />
+              <View style={detailStyles.statDivider} />
               <View style={detailStyles.stat}>
-                <Ionicons name="navigate-outline" size={14} color={Colors.textTertiary} />
-                <Text style={detailStyles.statLabel}>DIST</Text>
+                <Text style={detailStyles.statLabel}>Dist</Text>
                 <Text style={[detailStyles.statValue, { color }]}>{incident.distance}</Text>
               </View>
             </View>
 
-            {/* Address */}
             <View style={detailStyles.section}>
-              <Text style={detailStyles.sectionTitle}>LOCATION</Text>
+              <Text style={detailStyles.sectionTitle}>Location</Text>
               <Text style={detailStyles.sectionBody}>{incident.address}</Text>
             </View>
 
-            {/* Hazards */}
             {incident.hazards && incident.hazards.length > 0 && (
               <View style={detailStyles.section}>
-                <Text style={[detailStyles.sectionTitle, { color: Colors.danger }]}>⚠ HAZARD WARNINGS</Text>
+                <Text style={[detailStyles.sectionTitle, { color: Colors.onScene }]}>Hazard warnings</Text>
                 {incident.hazards.map((h, i) => (
                   <View key={i} style={detailStyles.hazardRow}>
-                    <View style={detailStyles.hazardDot} />
-                    <Text style={detailStyles.hazardText}>{h}</Text>
+                    <View style={[detailStyles.hazardDot, { backgroundColor: Colors.onScene }]} />
+                    <Text style={[detailStyles.hazardText, { color: Colors.onScene }]}>{h}</Text>
                   </View>
                 ))}
               </View>
             )}
 
-            {/* Assigned team */}
             <View style={detailStyles.section}>
-              <Text style={detailStyles.sectionTitle}>ASSIGNED TEAM</Text>
+              <Text style={detailStyles.sectionTitle}>Assigned team</Text>
               <View style={detailStyles.tagRow}>
                 {incident.assignedTeam?.map((name, i) => (
-                  <View key={i} style={[detailStyles.tag, { borderColor: Colors.cyan + '30' }]}>
+                  <View key={i} style={detailStyles.tag}>
                     <Text style={detailStyles.tagText}>{name}</Text>
                   </View>
                 ))}
               </View>
             </View>
 
-            {/* Resources requested */}
             {incident.resourcesRequested && (
               <View style={detailStyles.section}>
-                <Text style={[detailStyles.sectionTitle, { color: Colors.warning }]}>RESOURCES REQUESTED</Text>
+                <Text style={[detailStyles.sectionTitle, { color: Colors.enRoute }]}>Resources requested</Text>
                 {incident.resourcesRequested.map((r, i) => (
                   <View key={i} style={detailStyles.resourceRow}>
-                    <Text style={detailStyles.resourceBullet}>→</Text>
+                    <Text style={[detailStyles.resourceBullet, { color: Colors.enRoute }]}>→</Text>
                     <Text style={detailStyles.resourceText}>{r}</Text>
                   </View>
                 ))}
               </View>
             )}
 
-            {/* 911 Call transcript */}
             <View style={detailStyles.section}>
-              <Text style={detailStyles.sectionTitle}>911 CALL TRANSCRIPT</Text>
+              <Text style={detailStyles.sectionTitle}>911 call transcript</Text>
               <View style={detailStyles.transcriptBox}>
-                <Text style={detailStyles.transcriptText}>
-                  "{incident.callTranscript}"
-                </Text>
+                <Text style={detailStyles.transcriptText}>"{incident.callTranscript}"</Text>
               </View>
             </View>
 
-            {/* Timeline */}
             <View style={detailStyles.section}>
-              <Text style={detailStyles.sectionTitle}>INCIDENT TIMELINE</Text>
+              <Text style={detailStyles.sectionTitle}>Incident timeline</Text>
               {incident.timeline?.map((entry, i) => (
                 <View key={i} style={detailStyles.timelineRow}>
                   <View style={detailStyles.timelineLeft}>
                     <Text style={[detailStyles.timelineTime, { color }]}>{entry.time}</Text>
                     {i < incident.timeline.length - 1 && (
-                      <View style={[detailStyles.timelineLine, { backgroundColor: color + '25' }]} />
+                      <View style={[detailStyles.timelineLine, { backgroundColor: color + '30' }]} />
                     )}
                   </View>
-                  <View style={[detailStyles.timelineDot, { backgroundColor: color, borderColor: color + '40' }]} />
+                  <View style={[detailStyles.timelineDot, { backgroundColor: color }]} />
                   <Text style={detailStyles.timelineEvent}>{entry.event}</Text>
                 </View>
               ))}
             </View>
           </ScrollView>
-
         </Pressable>
       </Pressable>
     </Modal>
@@ -204,33 +157,29 @@ function IncidentDetailOverlay({ incident, onClose }) {
 const detailStyles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(3, 7, 18, 0.85)',
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
     justifyContent: 'center',
     alignItems: 'center',
     padding: 16,
   },
   card: {
-    backgroundColor: Colors.surface,
-    borderRadius: 4,
-    borderWidth: 1,
-    borderColor: Colors.cyanBorder,
+    backgroundColor: Colors.surface1,
+    borderRadius: 13,
+    borderWidth: 0.5,
+    borderColor: Colors.border,
     width: '100%',
     maxHeight: '85%',
     overflow: 'hidden',
   },
-  glowLine: {
-    height: 2,
-    width: '100%',
-  },
   closeButton: {
     position: 'absolute',
-    top: 10,
-    right: 10,
+    top: 12,
+    right: 12,
     width: 30,
     height: 30,
-    borderRadius: 4,
-    backgroundColor: Colors.panel,
-    borderWidth: 1,
+    borderRadius: 8,
+    backgroundColor: Colors.surface2,
+    borderWidth: 0.5,
     borderColor: Colors.border,
     alignItems: 'center',
     justifyContent: 'center',
@@ -241,90 +190,59 @@ const detailStyles = StyleSheet.create({
     gap: 16,
   },
   headerRow: {
-    flexDirection: 'row',
-    gap: 14,
-    alignItems: 'flex-start',
+    paddingRight: 36,
   },
-  iconBox: {
-    width: 50,
-    height: 50,
-    borderRadius: 4,
-    borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  headerInfo: {
-    flex: 1,
-  },
-  priorityBadge: {
-    alignSelf: 'flex-start',
-    paddingVertical: 3,
-    paddingHorizontal: 8,
-    borderRadius: 2,
-    borderWidth: 1,
-    marginBottom: 6,
-  },
-  priorityText: {
-    fontSize: 9,
-    fontWeight: '700',
-    fontFamily: 'monospace',
-    letterSpacing: 1.5,
+  headerInfo: { gap: 2 },
+  priorityLabel: {
+    fontSize: 11,
+    fontWeight: '500',
   },
   type: {
     fontSize: 20,
-    fontWeight: '700',
-    color: Colors.textBright,
-    letterSpacing: 0.3,
+    fontWeight: '500',
+    color: Colors.text1,
   },
   id: {
-    fontSize: 10,
-    color: Colors.textTertiary,
-    fontFamily: 'monospace',
-    letterSpacing: 1,
-    marginTop: 3,
+    fontSize: 11,
+    color: Colors.text3,
   },
   statsRow: {
     flexDirection: 'row',
-    backgroundColor: Colors.panel,
-    borderRadius: 4,
-    borderWidth: 1,
+    backgroundColor: Colors.surface2,
+    borderRadius: 10,
+    borderWidth: 0.5,
     borderColor: Colors.border,
     paddingVertical: 12,
   },
   stat: {
     flex: 1,
     alignItems: 'center',
-    gap: 3,
+    gap: 4,
   },
   statLabel: {
-    fontSize: 8,
-    fontWeight: '700',
-    fontFamily: 'monospace',
-    color: Colors.textTertiary,
-    letterSpacing: 1.5,
+    fontSize: 10,
+    color: Colors.text3,
   },
   statValue: {
     fontSize: 14,
-    fontWeight: '700',
-    fontFamily: 'monospace',
+    fontWeight: '500',
+    fontVariant: ['tabular-nums'],
   },
   statDivider: {
-    width: 1,
+    width: 0.5,
     alignSelf: 'stretch',
+    backgroundColor: Colors.border,
   },
-  section: {
-    gap: 8,
-  },
+  section: { gap: 8 },
   sectionTitle: {
     fontSize: 10,
-    fontWeight: '700',
-    fontFamily: 'monospace',
-    color: Colors.cyan,
-    letterSpacing: 2,
+    fontWeight: '500',
+    color: Colors.text3,
+    letterSpacing: 0.4,
   },
   sectionBody: {
     fontSize: 13,
-    color: Colors.text,
+    color: Colors.text1,
     lineHeight: 18,
   },
   hazardRow: {
@@ -336,13 +254,10 @@ const detailStyles = StyleSheet.create({
     width: 5,
     height: 5,
     borderRadius: 2.5,
-    backgroundColor: Colors.danger,
   },
   hazardText: {
     fontSize: 12,
-    color: Colors.danger,
-    fontFamily: 'monospace',
-    letterSpacing: 0.3,
+    lineHeight: 18,
   },
   tagRow: {
     flexDirection: 'row',
@@ -352,46 +267,39 @@ const detailStyles = StyleSheet.create({
   tag: {
     paddingVertical: 4,
     paddingHorizontal: 10,
-    borderRadius: 2,
-    borderWidth: 1,
-    backgroundColor: Colors.cyanFaint,
+    borderRadius: 999,
+    borderWidth: 0.5,
+    borderColor: Colors.border,
+    backgroundColor: Colors.surface2,
   },
   tagText: {
     fontSize: 11,
-    color: Colors.cyan,
-    fontFamily: 'monospace',
-    fontWeight: '600',
-    letterSpacing: 0.3,
+    color: Colors.text2,
+    fontWeight: '500',
   },
   resourceRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
   },
-  resourceBullet: {
-    fontSize: 12,
-    color: Colors.warning,
-    fontFamily: 'monospace',
-    fontWeight: '700',
-  },
+  resourceBullet: { fontSize: 12 },
   resourceText: {
     fontSize: 12,
-    color: Colors.text,
-    fontFamily: 'monospace',
-    letterSpacing: 0.3,
+    color: Colors.text2,
+    lineHeight: 18,
   },
   transcriptBox: {
-    backgroundColor: Colors.panel,
-    borderRadius: 4,
-    borderWidth: 1,
+    backgroundColor: Colors.surface2,
+    borderRadius: 8,
+    borderWidth: 0.5,
     borderColor: Colors.border,
     borderLeftWidth: 3,
-    borderLeftColor: Colors.textTertiary,
+    borderLeftColor: Colors.text4,
     padding: 12,
   },
   transcriptText: {
     fontSize: 12,
-    color: Colors.textSecondary,
+    color: Colors.text2,
     fontStyle: 'italic',
     lineHeight: 18,
   },
@@ -407,9 +315,8 @@ const detailStyles = StyleSheet.create({
   },
   timelineTime: {
     fontSize: 10,
-    fontWeight: '700',
-    fontFamily: 'monospace',
-    letterSpacing: 0.5,
+    fontWeight: '500',
+    fontVariant: ['tabular-nums'],
   },
   timelineLine: {
     width: 1,
@@ -421,26 +328,13 @@ const detailStyles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    borderWidth: 2,
     marginTop: 2,
   },
   timelineEvent: {
     flex: 1,
     fontSize: 11,
-    color: Colors.text,
+    color: Colors.text2,
     lineHeight: 16,
-  },
-  closeHint: {
-    paddingVertical: 10,
-    borderTopWidth: 1,
-    borderTopColor: Colors.border,
-    alignItems: 'center',
-  },
-  closeHintText: {
-    fontSize: 9,
-    fontFamily: 'monospace',
-    color: Colors.textTertiary,
-    letterSpacing: 2,
   },
 });
 
@@ -457,26 +351,10 @@ export default function DashboardScreen() {
   });
 
   return (
-    <View style={styles.screen}>
-      {/* Header */}
+    <SafeAreaView style={styles.screen}>
       <View style={styles.header}>
-        <View style={styles.hamburgerRow}>
-          <HamburgerButton />
-        </View>
-        <View style={styles.headerTop}>
-          <View style={styles.headerBrand}>
-            <View style={styles.brandIcon}>
-              <Ionicons name="shield-checkmark" size={16} color={Colors.cyan} />
-            </View>
-            <View>
-              <Text style={styles.title}>PSC COMPANION</Text>
-              <View style={styles.liveRow}>
-                <View style={styles.liveDot} />
-                <Text style={styles.liveText}>SYSTEM ONLINE</Text>
-              </View>
-            </View>
-          </View>
-        </View>
+        <HamburgerButton />
+        <Text style={styles.headerTitle}>PSC Companion</Text>
       </View>
 
       <ScrollView
@@ -484,13 +362,7 @@ export default function DashboardScreen() {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* Active Incidents — vertical stack */}
-        <View style={styles.incidentHeader}>
-          <View style={[styles.incidentHeaderIcon, { borderColor: Colors.danger }]}>
-            <Text style={{ fontSize: 12, fontWeight: '700', color: Colors.danger }}>!</Text>
-          </View>
-          <Text style={styles.incidentHeaderTitle}>ACTIVE INCIDENTS</Text>
-        </View>
+        <SectionHeader title="Active incidents" count={INCIDENTS.length} />
         <View style={styles.incidentList}>
           {INCIDENTS.map((inc) => (
             <IncidentCard
@@ -501,91 +373,46 @@ export default function DashboardScreen() {
           ))}
         </View>
 
-        {/* Team — horizontal scroll */}
-        <View style={styles.teamHeader}>
-          <View style={[styles.teamHeaderIcon, { borderColor: Colors.cyan }]}>
-            <Text style={{ fontSize: 12, fontWeight: '700', color: Colors.cyan }}>!</Text>
-          </View>
-          <Text style={styles.teamHeaderTitle}>TEAM STATUS</Text>
-          <Text style={styles.teamCount}>{TEAM.length}</Text>
-        </View>
-        {/* Crew readiness */}
+        <SectionHeader title="Team status" count={TEAM.length} />
+
+        {/* Readiness grid */}
         <View style={styles.readinessPanel}>
-          <View style={styles.readinessHeader}>
-            <Ionicons name="people" size={14} color={Colors.cyan} />
-            <Text style={styles.readinessTitle}>LIVE STATUS</Text>
-            <Text style={styles.readinessCount}>{TEAM.length} MEMBERS</Text>
-          </View>
-          <View style={styles.readinessGrid}>
-            {Object.entries(StatusStyles).map(([key, val]) => {
-              const count = statusCounts[key] || 0;
-              return (
-                <View key={key} style={[styles.readinessItem, { borderColor: val.color + '20' }]}>
-                  <View style={styles.readinessItemTop}>
-                    <View style={[styles.readinessDot, { backgroundColor: val.color }]} />
-                    <Text style={[styles.readinessNum, { color: val.color }]}>{count}</Text>
-                  </View>
-                  <Text style={[styles.readinessLabel, { color: val.color + 'cc' }]}>{val.label}</Text>
-                </View>
-              );
-            })}
-          </View>
-        </View>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          snapToAlignment="start"
-          decelerationRate="fast"
-          snapToInterval={160}
-          style={styles.teamScroll}
-          contentContainerStyle={styles.teamScrollContent}
-        >
-          {sortedTeam.map((member) => {
-            const ms = StatusStyles[member.status] || StatusStyles.offline;
-            const isUrgent = member.status === 'needshelp';
+          {Object.entries(StatusStyles).map(([key, val], idx, arr) => {
+            const count = statusCounts[key] || 0;
+            const isLast = idx === arr.length - 1;
             return (
               <View
-                key={member.id}
-                style={[
-                  styles.teamCard,
-                  { borderColor: isUrgent ? ms.color + '60' : Colors.border },
-                  isUrgent && { backgroundColor: Colors.dangerFaint },
-                ]}
+                key={key}
+                style={[styles.readinessItem, !isLast && styles.readinessBorder]}
               >
-                {/* Urgent top glow */}
-                {isUrgent && <View style={[styles.teamCardGlow, { backgroundColor: ms.color + '50' }]} />}
-                {/* Avatar */}
-                <View style={[styles.teamCardAvatar, { borderColor: ms.color + '50', backgroundColor: ms.bg }]}>
-                  <Text style={[styles.teamCardInitial, { color: ms.color }]}>
-                    {member.name.split(' ').pop()[0]}
-                  </Text>
-                  <View style={[styles.teamCardLevel, { borderColor: ms.color + '60' }]}>
-                    <Text style={[styles.teamCardLevelText, { color: ms.color }]}>{member.level}</Text>
-                  </View>
-                </View>
-                {/* Name */}
-                <Text style={styles.teamCardName} numberOfLines={1}>{member.name}</Text>
-                <Text style={styles.teamCardRole} numberOfLines={1}>{member.role}</Text>
-                {/* Status badge */}
-                <View style={[styles.teamCardBadge, { borderColor: ms.color + '40', backgroundColor: ms.bg }]}>
-                  <Text style={[styles.teamCardBadgeText, { color: ms.color }]}>{ms.label}</Text>
-                </View>
-                {/* Footer */}
-                <Text style={styles.teamCardMeta}>{member.lastUpdate}</Text>
+                <View style={[styles.readinessDot, { backgroundColor: val.color }]} />
+                <Text style={[styles.readinessNum, { color: val.color }]}>{count}</Text>
+                <Text style={styles.readinessLabel}>{val.label}</Text>
               </View>
             );
           })}
+        </View>
+
+        {/* Team chips horizontal scroll */}
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.teamScroll}
+          contentContainerStyle={styles.teamScrollContent}
+        >
+          {sortedTeam.map((member) => (
+            <TeamChip key={member.id} member={member} />
+          ))}
         </ScrollView>
       </ScrollView>
 
-      {/* Incident Detail Overlay */}
       {selectedIncident && (
         <IncidentDetailOverlay
           incident={selectedIncident}
           onClose={() => setSelectedIncident(null)}
         />
       )}
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -595,120 +422,72 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.bg,
   },
   header: {
-    backgroundColor: Colors.bg,
-    borderBottomWidth: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 0.5,
     borderBottomColor: Colors.border,
   },
-  hamburgerRow: {
-    paddingTop: 55,
-    paddingHorizontal: 18,
-    paddingBottom: 26,
+  headerTitle: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: Colors.text1,
   },
-  headerTop: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 18,
-    paddingBottom: 12,
-  },
-  headerBrand: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  brandIcon: {
-    width: 34,
-    height: 34,
-    borderRadius: 4,
-    backgroundColor: Colors.cyanFaint,
-    borderWidth: 1,
-    borderColor: Colors.cyanBorder,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  title: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: Colors.textBright,
-    letterSpacing: 1.5,
-  },
-  liveRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-    marginTop: 1,
-  },
-  liveDot: {
-    width: 5,
-    height: 5,
-    borderRadius: 2.5,
-    backgroundColor: Colors.success,
-  },
-  liveText: {
-    fontSize: 8,
-    fontWeight: '700',
-    fontFamily: 'monospace',
-    color: Colors.success,
-    letterSpacing: 1.5,
-  },
-  scroll: {
-    flex: 1,
-  },
+  scroll: { flex: 1 },
   scrollContent: {
     paddingHorizontal: 14,
     paddingBottom: 20,
-    gap: 14,
-    paddingTop: 12,
+    paddingTop: 8,
+    gap: 0,
   },
-  readinessPanel: {
-    backgroundColor: Colors.panel,
-    borderRadius: 4,
-    borderWidth: 1,
-    borderColor: Colors.cyanBorder,
-    overflow: 'hidden',
-  },
-  readinessHeader: {
+  sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingTop: 14,
+    paddingHorizontal: 4,
+    paddingBottom: 8,
+  },
+  sectionTitle: {
+    fontSize: 13,
+    fontWeight: '500',
+    color: Colors.text1,
+  },
+  countPill: {
+    backgroundColor: Colors.surface3,
+    paddingVertical: 2,
+    paddingHorizontal: 8,
+    borderRadius: 999,
+  },
+  countText: {
+    fontSize: 11,
+    fontWeight: '500',
+    color: Colors.text2,
+  },
+  incidentList: {
     gap: 8,
-    paddingVertical: 9,
-    paddingHorizontal: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
   },
-  readinessTitle: {
-    fontSize: 10,
-    fontWeight: '700',
-    fontFamily: 'monospace',
-    color: Colors.cyan,
-    letterSpacing: 2,
-    flex: 1,
-  },
-  readinessCount: {
-    fontSize: 9,
-    fontWeight: '700',
-    fontFamily: 'monospace',
-    color: Colors.textTertiary,
-    letterSpacing: 1,
-  },
-  readinessGrid: {
+
+  readinessPanel: {
     flexDirection: 'row',
-    padding: 8,
-    gap: 6,
+    backgroundColor: Colors.surface1,
+    borderRadius: 13,
+    borderWidth: 0.5,
+    borderColor: Colors.border,
+    overflow: 'hidden',
+    marginBottom: 8,
   },
   readinessItem: {
     flex: 1,
     alignItems: 'center',
-    paddingVertical: 8,
-    borderRadius: 3,
-    borderWidth: 1,
-    backgroundColor: Colors.bg,
+    paddingVertical: 12,
     gap: 4,
   },
-  readinessItemTop: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
+  readinessBorder: {
+    borderRightWidth: 0.5,
+    borderRightColor: Colors.border,
   },
   readinessDot: {
     width: 6,
@@ -717,65 +496,14 @@ const styles = StyleSheet.create({
   },
   readinessNum: {
     fontSize: 16,
-    fontWeight: '700',
-    fontFamily: 'monospace',
+    fontWeight: '500',
+    fontVariant: ['tabular-nums'],
   },
   readinessLabel: {
-    fontSize: 7,
-    fontWeight: '700',
-    fontFamily: 'monospace',
-    letterSpacing: 0.8,
+    fontSize: 9,
+    color: Colors.text3,
   },
-  incidentHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  incidentHeaderIcon: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    borderWidth: 1.5,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  incidentHeaderTitle: {
-    fontSize: 12,
-    fontWeight: '700',
-    fontFamily: 'monospace',
-    letterSpacing: 2.5,
-    color: Colors.danger,
-  },
-  incidentList: {
-    gap: 10,
-  },
-  teamHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  teamHeaderIcon: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    borderWidth: 1.5,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  teamHeaderTitle: {
-    fontSize: 12,
-    fontWeight: '700',
-    fontFamily: 'monospace',
-    letterSpacing: 2.5,
-    color: Colors.cyan,
-    flex: 1,
-  },
-  teamCount: {
-    fontSize: 11,
-    fontWeight: '700',
-    fontFamily: 'monospace',
-    color: Colors.textTertiary,
-  },
+
   teamScroll: {
     marginHorizontal: -14,
   },
@@ -784,85 +512,49 @@ const styles = StyleSheet.create({
     gap: 10,
     paddingVertical: 4,
   },
-  teamCard: {
-    width: 150,
-    backgroundColor: Colors.panel,
-    borderRadius: 4,
-    borderWidth: 1,
-    padding: 12,
+
+  chip: {
+    width: 64,
     alignItems: 'center',
-    gap: 6,
-    overflow: 'hidden',
   },
-  teamCardGlow: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: 2,
+  chipOffline: {
+    opacity: 0.55,
   },
-  teamCardAvatar: {
-    width: 44,
-    height: 44,
-    borderRadius: 4,
+  chipAvatarWrap: {
+    position: 'relative',
+    marginBottom: 6,
+  },
+  chipAvatar: {
+    width: 54,
+    height: 54,
+    borderRadius: 27,
+    backgroundColor: Colors.surface1,
     borderWidth: 1.5,
     alignItems: 'center',
     justifyContent: 'center',
-    position: 'relative',
   },
-  teamCardInitial: {
+  chipInitial: {
     fontSize: 20,
-    fontWeight: '700',
-    fontFamily: 'monospace',
+    fontWeight: '500',
   },
-  teamCardLevel: {
+  chipDot: {
     position: 'absolute',
-    bottom: -4,
-    right: -4,
-    backgroundColor: Colors.surface,
-    borderWidth: 1,
-    borderRadius: 2,
-    paddingHorizontal: 4,
-    minWidth: 18,
-    alignItems: 'center',
+    bottom: 0,
+    right: 1,
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    borderWidth: 2.5,
+    borderColor: Colors.bg,
   },
-  teamCardLevelText: {
-    fontSize: 8,
-    fontWeight: '700',
-    fontFamily: 'monospace',
-    lineHeight: 14,
-  },
-  teamCardName: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: Colors.textBright,
+  chipName: {
+    fontSize: 11,
+    color: Colors.text1,
     textAlign: 'center',
-    marginTop: 2,
   },
-  teamCardRole: {
+  chipRole: {
     fontSize: 9,
-    fontFamily: 'monospace',
-    color: Colors.textTertiary,
-    letterSpacing: 0.3,
+    color: Colors.text3,
     textAlign: 'center',
-  },
-  teamCardBadge: {
-    paddingVertical: 3,
-    paddingHorizontal: 8,
-    borderRadius: 2,
-    borderWidth: 1,
-    marginTop: 2,
-  },
-  teamCardBadgeText: {
-    fontSize: 8,
-    fontWeight: '700',
-    fontFamily: 'monospace',
-    letterSpacing: 1,
-  },
-  teamCardMeta: {
-    fontSize: 8,
-    fontFamily: 'monospace',
-    color: Colors.textTertiary,
-    letterSpacing: 0.5,
   },
 });

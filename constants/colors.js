@@ -1,89 +1,56 @@
-/**
- * PSC Companion — Solo Leveling System UI Design Tokens
- * Dark theme with cyan glow, system-panel aesthetic.
- * Import: import { Colors, StatusStyles, STATUS_SORT_ORDER } from '../constants/colors';
- */
-
 export const Colors = {
-  // Backgrounds
-  bg: '#070c1a',
-  surface: '#0a1228',
-  panel: 'rgba(8, 18, 40, 0.85)',
-
-  // Primary glow accent
-  cyan: '#00d4ff',
-  cyanDim: '#0090b3',
-  cyanGlow: 'rgba(0, 212, 255, 0.35)',
-  cyanFaint: 'rgba(0, 212, 255, 0.08)',
-  cyanBorder: 'rgba(0, 212, 255, 0.25)',
-
-  // Semantic
-  danger: '#ff3b3b',
-  dangerGlow: 'rgba(255, 59, 59, 0.3)',
-  dangerStrong: 'rgba(255, 59, 59, 0.16)',
-  dangerFaint: 'rgba(255, 59, 59, 0.08)',
-  orange: '#FF5F15',
-  orangeStrong: 'gba(255, 149, 0, 0.16',
-  orangeFaint:'rgba(255, 140, 0, 0.08)',
-  warning: '#ffb020',
-  warningGlow: 'rgba(255, 176, 32, 0.3)',
-  warningStrong: 'rgba(255, 204, 0, 0.16)',
-  warningFaint: 'rgba(255, 176, 32, 0.08)',
-  success: '#00e676',
-  successGlow: 'rgba(0, 230, 118, 0.3)',
-  successFaint: 'rgba(0, 230, 118, 0.08)',
+  // Surfaces
+  bg:        '#16181c',
+  surface1:  '#1f2228',
+  surface2:  '#1c1f24',
+  surface3:  '#22262d',
+  border:    '#2a2e35',
 
   // Text
-  text: '#c8d6e5',
-  textBright: '#e8f0fe',
-  textSecondary: '#7a8ba8',
-  textTertiary: '#4a6080',
-  textQuaternary: '#7688a3',
+  text1:     '#e8e8e6',
+  text2:     '#9ca0a8',
+  text3:     '#7d8087',
+  text4:     '#5a5d63',
+  navIdle:   '#4a4d54',
 
-  // Borders
-  border: 'rgba(0, 212, 255, 0.12)',
-  borderStrong: 'rgba(0, 212, 255, 0.25)',
+  // Status accents (desaturated)
+  available: '#7eb281',   // sage
+  enRoute:   '#c69556',   // ember
+  onScene:   '#c46b66',   // brick
+  offDuty:   '#7d8087',   // slate
+  info:      '#6a8fb8',   // slate blue
 };
 
-/**
- * Status definitions — Solo Leveling system notification style.
- * Labels are UPPERCASE to match the game UI bracket style.
- */
 export const StatusStyles = {
   safe: {
-    color: Colors.success,
-    glow: Colors.successGlow,
-    bg: Colors.successFaint,
-    label: 'SAFE',
-    icon: 'checkmark-shield',
+    color: Colors.available,
+    label: 'Available',
+    icon: 'checkmark-circle-outline',
+    iconLib: 'Ionicons',
   },
   enroute: {
-    color: Colors.cyan,
-    glow: Colors.cyanGlow,
-    bg: Colors.cyanFaint,
-    label: 'EN ROUTE',
-    icon: 'arrow-forward-circle',
+    color: Colors.enRoute,
+    label: 'En route',
+    icon: 'navigation-outline',
+    iconLib: 'MaterialCommunityIcons',
   },
   onscene: {
-    color: Colors.warning,
-    glow: Colors.warningGlow,
-    bg: Colors.warningFaint,
-    label: 'ON SCENE',
-    icon: 'eye',
+    color: Colors.onScene,
+    label: 'On scene',
+    icon: 'map-marker-outline',
+    iconLib: 'MaterialCommunityIcons',
   },
   needshelp: {
-    color: Colors.danger,
-    glow: Colors.dangerGlow,
-    bg: Colors.dangerFaint,
-    label: 'NEEDS HELP',
-    icon: 'warning',
+    color: Colors.onScene,
+    label: 'Needs help',
+    icon: 'alert-circle-outline',
+    iconLib: 'MaterialCommunityIcons',
   },
   offline: {
-    color: Colors.textTertiary,
-    glow: 'transparent',
-    bg: 'rgba(74, 96, 128, 0.08)',
-    label: 'OFFLINE',
-    icon: 'wifi-off',
+    color: Colors.offDuty,
+    label: 'Offline',
+    icon: 'wifi-off-outline',
+    iconLib: 'Ionicons',
   },
 };
 

@@ -1,8 +1,4 @@
-/**
- * Tab Layout — Solo Leveling system UI tab bar.
- */
-
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 import { Colors } from '../../../constants/colors';
@@ -13,31 +9,29 @@ export default function TabLayout() {
       screenOptions={{
         headerShown: false,
         tabBarStyle: styles.tabBar,
-        tabBarActiveTintColor: Colors.cyan,
-        tabBarInactiveTintColor: Colors.textTertiary,
-        tabBarLabelStyle: styles.tabLabel,
+        tabBarActiveTintColor: Colors.text1,
+        tabBarInactiveTintColor: Colors.navIdle,
+        tabBarShowLabel: false,
       }}
     >
       <Tabs.Screen
         name="index"
-        options={{ href: null}}
+        options={{ href: null }}
       />
       <Tabs.Screen
         name="alerts"
         options={{
-          title: 'ALERTS',
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="flash" size={size} color={color} />
+            <Ionicons name="flash-outline" size={size} color={color} />
           ),
         }}
       />
       <Tabs.Screen
         name="checkin"
         options={{
-          title: 'CHECK IN',
-          tabBarIcon: ({ color, size }) => (
+          tabBarIcon: ({ color }) => (
             <View style={styles.checkinButton}>
-              <Ionicons name="radio" size={24} color={Colors.cyan} />
+              <MaterialCommunityIcons name="radio-tower" size={22} color={Colors.text1} />
             </View>
           ),
           tabBarLabel: () => null,
@@ -45,14 +39,13 @@ export default function TabLayout() {
       />
       <Tabs.Screen
         name="profile"
-        options={{href: null}}
+        options={{ href: null }}
       />
       <Tabs.Screen
         name="map/index"
         options={{
-          title: 'MAP',
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="map" size={size} color={color} />
+            <Ionicons name="map-outline" size={size} color={color} />
           ),
         }}
       />
@@ -69,33 +62,21 @@ export default function TabLayout() {
 
 const styles = StyleSheet.create({
   tabBar: {
-    backgroundColor: Colors.surface,
-    borderTopWidth: 1,
+    backgroundColor: Colors.bg,
+    borderTopWidth: 0.5,
     borderTopColor: Colors.border,
-    height: 80,
-    paddingBottom: 20,
-    paddingTop: 8,
-  },
-  tabLabel: {
-    fontSize: 9,
-    fontWeight: '700',
-    fontFamily: 'monospace',
-    letterSpacing: 1.5,
+    height: 68,
+    paddingBottom: 16,
+    paddingTop: 12,
   },
   checkinButton: {
-    width: 52,
-    height: 52,
-    borderRadius: 4,
-    backgroundColor: Colors.cyanFaint,
-    borderWidth: 1.5,
-    borderColor: Colors.cyanBorder,
+    width: 44,
+    height: 44,
+    borderRadius: 13,
+    backgroundColor: Colors.surface1,
+    borderWidth: 0.5,
+    borderColor: Colors.border,
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: -16,
-    shadowColor: Colors.cyan,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.35,
-    shadowRadius: 16,
-    elevation: 8,
   },
 });

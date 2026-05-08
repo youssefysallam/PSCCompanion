@@ -1,8 +1,3 @@
-/**
- * SignalBars — connectivity strength with glow.
- * Props: strength (0–4)
- */
-
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import { Colors } from '../../constants/colors';
@@ -10,10 +5,10 @@ import { Colors } from '../../constants/colors';
 export default function SignalBars({ strength = 0 }) {
   const barColor =
     strength <= 1
-      ? Colors.danger
+      ? Colors.onScene
       : strength <= 2
-        ? Colors.warning
-        : Colors.success;
+        ? Colors.enRoute
+        : Colors.available;
 
   return (
     <View style={styles.container}>
@@ -24,7 +19,7 @@ export default function SignalBars({ strength = 0 }) {
             styles.bar,
             {
               height: 2 + i * 2.5,
-              backgroundColor: i <= strength ? barColor : Colors.textTertiary + '40',
+              backgroundColor: i <= strength ? barColor : Colors.text4,
             },
           ]}
         />

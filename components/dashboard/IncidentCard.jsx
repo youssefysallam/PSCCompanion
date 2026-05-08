@@ -1,70 +1,44 @@
-/**
- * IncidentCard — Large swipeable card, Solo Leveling style.
- * Designed to be used inside a horizontal ScrollView.
- *
- * Props:
- *   incident (object) — { id, type, location, priority, time, units }
- *   width    (number) — card width (passed from parent based on screen size)
- */
-
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { Colors } from '../../constants/colors';
+
+function getIncidentIcon(type, color) {
+  if (type === 'Medical Response') {
+    return <MaterialCommunityIcons name="medical-bag" size={22} color={color} />;
+  }
+  if (type === 'Vehicle Accident') {
+    return <MaterialCommunityIcons name="car-emergency" size={22} color={color} />;
+  }
+  return <Ionicons name="flame" size={22} color={color} />;
+}
 
 export default function IncidentCard({ incident, width, onPress }) {
   const isHigh = incident.priority === 'high';
-  const color = isHigh ? Colors.danger : Colors.warning;
-  const bg = isHigh ? Colors.dangerFaint : Colors.warningFaint;
+  const severityColor = isHigh ? Colors.onScene : Colors.enRoute;
   const cardWidth = width || undefined;
 
   return (
     <TouchableOpacity
       activeOpacity={0.8}
       onPress={() => onPress && onPress(incident)}
-      style={[styles.card, { borderColor: color + '35' }, cardWidth ? { width: cardWidth } : null]}
+      style={[styles.card, cardWidth ? { width: cardWidth } : null]}
     >
-      {/* Top glow line */}
-      <View style={[styles.glowLine, { backgroundColor: color + '50' }]} />
+      <View style={[styles.severityBar, { backgroundColor: severityColor }]} />
 
-      {/* Priority tag */}
-      <View style={[styles.priorityBadge, { backgroundColor: bg, borderColor: color + '50' }]}>
-        <Text style={[styles.priorityText, { color }]}>
-          {isHigh ? '! URGENT' : '◉ ACTIVE'}
-        </Text>
-      </View>
-
-      {/* Main content */}
-      <View style={styles.body}>
-        <View style={[styles.iconBox, { backgroundColor: bg, borderColor: color + '40' }]}>
-          <Ionicons
-            name={isHigh ? 'flame' : 'medkit'}
-            size={26}
-            color={color}
-          />
+      <View style={styles.inner}>
+        <View style={styles.iconCol}>
+          {getIncidentIcon(incident.type, severityColor)}
         </View>
 
-        <View style={styles.info}>
+        <View style={styles.body}>
           <Text style={styles.type}>{incident.type}</Text>
-          <Text style={styles.location}>{incident.location}</Text>
+          <Text style={styles.address}>{incident.location}</Text>
         </View>
-      </View>
 
-      {/* Footer stats */}
-      <View style={styles.footer}>
-        <View style={styles.stat}>
-          <Text style={styles.statLabel}>TIME</Text>
-          <Text style={[styles.statValue, { color }]}>{incident.time}</Text>
-        </View>
-        <View style={[styles.statDivider, { backgroundColor: color + '20' }]} />
-        <View style={styles.stat}>
-          <Text style={styles.statLabel}>UNITS</Text>
-          <Text style={[styles.statValue, { color }]}>{incident.units}</Text>
-        </View>
-        <View style={[styles.statDivider, { backgroundColor: color + '20' }]} />
-        <View style={styles.stat}>
-          <Text style={styles.statLabel}>ID</Text>
-          <Text style={[styles.statValue, { color }]}>{incident.id}</Text>
+        <View style={styles.meta}>
+          <Text style={[styles.codeBadge, { color: severityColor }]}>{incident.id}</Text>
+          <Text style={styles.time}>{incident.time}</Text>
         </View>
       </View>
     </TouchableOpacity>
@@ -73,90 +47,53 @@ export default function IncidentCard({ incident, width, onPress }) {
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: Colors.panel,
-    borderRadius: 4,
-    borderWidth: 1,
+    backgroundColor: Colors.surface1,
+    borderRadius: 13,
+    borderWidth: 0.5,
+    borderColor: Colors.border,
+    flexDirection: 'row',
     overflow: 'hidden',
-    paddingBottom: 0,
   },
-  glowLine: {
-    height: 2,
-    width: '100%',
+  severityBar: {
+    width: 3,
   },
-  priorityBadge: {
-    alignSelf: 'flex-start',
-    marginTop: 14,
-    marginLeft: 14,
-    paddingVertical: 4,
-    paddingHorizontal: 10,
-    borderRadius: 2,
-    borderWidth: 1,
+  inner: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    padding: 12,
   },
-  priorityText: {
-    fontSize: 10,
-    fontWeight: '700',
-    fontFamily: 'monospace',
-    letterSpacing: 1.5,
+  iconCol: {
+    width: 22,
+    alignItems: 'center',
   },
   body: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 14,
-    paddingHorizontal: 14,
-    paddingTop: 14,
-    paddingBottom: 16,
-  },
-  iconBox: {
-    width: 50,
-    height: 50,
-    borderRadius: 4,
-    borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  info: {
     flex: 1,
+    minWidth: 0,
   },
   type: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: Colors.textBright,
+    fontSize: 13,
+    fontWeight: '500',
+    color: Colors.text1,
+  },
+  address: {
+    fontSize: 11,
+    color: Colors.text3,
+    marginTop: 2,
+  },
+  meta: {
+    alignItems: 'flex-end',
+    gap: 4,
+  },
+  codeBadge: {
+    fontSize: 11,
+    fontWeight: '500',
     letterSpacing: 0.3,
   },
-  location: {
-    fontSize: 12,
-    color: Colors.textSecondary,
-    fontFamily: 'monospace',
-    marginTop: 4,
-    letterSpacing: 0.5,
-  },
-  footer: {
-    flexDirection: 'row',
-    borderTopWidth: 1,
-    borderTopColor: Colors.border,
-    paddingVertical: 10,
-    paddingHorizontal: 14,
-  },
-  stat: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  statLabel: {
-    fontSize: 8,
-    fontWeight: '700',
-    fontFamily: 'monospace',
-    color: Colors.textTertiary,
-    letterSpacing: 1.5,
-    marginBottom: 3,
-  },
-  statValue: {
-    fontSize: 13,
-    fontWeight: '700',
-    fontFamily: 'monospace',
-    letterSpacing: 0.5,
-  },
-  statDivider: {
-    width: 1,
-    alignSelf: 'stretch',
+  time: {
+    fontSize: 10,
+    color: Colors.text3,
+    fontVariant: ['tabular-nums'],
   },
 });
