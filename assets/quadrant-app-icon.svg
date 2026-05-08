@@ -1,0 +1,9 @@
+<svg viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Quadrant app icon">
+  <rect width="1024" height="1024" rx="180" fill="#16181c"/>
+  <g transform="translate(112 112) scale(8)">
+    <rect x="20" y="20" width="26" height="26" rx="4" fill="#7eb281"/>
+    <rect x="54" y="20" width="26" height="26" rx="4" fill="none" stroke="#e8e8e6" stroke-width="2.5"/>
+    <rect x="20" y="54" width="26" height="26" rx="4" fill="none" stroke="#e8e8e6" stroke-width="2.5"/>
+    <rect x="54" y="54" width="26" height="26" rx="4" fill="none" stroke="#e8e8e6" stroke-width="2.5"/>
+  </g>
+</svg>
