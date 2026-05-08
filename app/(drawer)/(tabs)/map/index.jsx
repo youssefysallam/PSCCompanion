@@ -1,0 +1,309 @@
+import { Ionicons } from '@expo/vector-icons';
+import React, { useMemo, useRef, useState } from 'react';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import MapView, { Circle, Marker } from 'react-native-maps';
+
+import HamburgerButton from '../../../../components/header/HamburgerButton';
+import { Colors } from '../../../../constants/colors';
+import { HAZARD_ZONES, TEAM, USER_PROFILE } from '../../../../constants/mockData';
+
+import AutoManDownWarning from '../../../../components/map/AutoManDownWarning';
+import FilterPanel from '../../../../components/map/FilterPanel';
+import ICSBanner from '../../../../components/map/ICSBanner';
+import ManDownOverlay from '../../../../components/map/ManDownOverlay';
+import {
+  DARK_MAP_STYLE,
+  HAZARD_COLORS,
+  INITIAL_REGION,
+  getDistanceMeters,
+  getDivisions,
+} from '../../../../components/map/mapHelpers';
+import MapLegend from '../../../../components/map/MapLegend';
+import TeamMarker from '../../../../components/map/TeamMarker';
+import { useAutoManDown } from '../../../../components/map/useAutoManDown';
+import { useManDown } from '../../../../components/map/useManDown';
+import { useSimulatedLocation } from '../../../../components/map/useSimulatedLocation';
+
+
+export default function MapScreen() {
+  const mapRef = useRef(null);
+
+  const [showFilter, setShowFilter] = useState(false);
+  const [filters, setFilters] = useState({
+    division: 'All',
+    status: 'All',
+    radius: 0,
+    hazards: true,
+  });
+
+  //simulation toggle - off by default 
+  const [simRunning, setSimRunning] = useState(false);
+  const { manDownActive, manDownResponders, handleManDown, clearManDown } = useManDown();
+  //simulated location - returns real coords when sim is off 
+  const userCoords = useSimulatedLocation(simRunning);
+
+  // Auto man-down detection
+  const { warningActive, countdown, dismiss } = useAutoManDown({
+    coords: userCoords,
+    incidentId: USER_PROFILE.incidentId,
+    simRunning,
+    onTrigger: handleManDown,
+  });
+
+  const currentIncidentId = USER_PROFILE.incidentId;
+  const divisions = useMemo(
+    () => (currentIncidentId ? getDivisions(TEAM, currentIncidentId) : ['All']),
+    [currentIncidentId]
+  );
+
+  const filteredTeam = useMemo(() => {
+    return TEAM.filter((m) => {
+      if (filters.division !== 'All' && m.division !== filters.division) return false;
+      if (filters.status !== 'All' && m.status !== filters.status) return false;
+      if (filters.radius > 0) {
+        const dist = getDistanceMeters(userCoords, m.coords);
+        if (dist > filters.radius) return false;
+      }
+      return true;
+    });
+  }, [filters]);
+
+  const hazards = filters.hazards
+    ? HAZARD_ZONES.filter((h) => h.incidentId === currentIncidentId)
+    : [];
+
+  const activeFilterCount = [
+    filters.division !== 'All',
+    filters.status !== 'All',
+    filters.radius > 0,
+  ].filter(Boolean).length;
+
+  // Simulated user profile with live coords
+  const liveUserProfile = { ...USER_PROFILE, coords: userCoords };
+  
+  return (
+    <View style={styles.screen}>
+      <MapView
+        ref={mapRef}
+        style={StyleSheet.absoluteFillObject}
+        initialRegion={INITIAL_REGION}
+        customMapStyle={DARK_MAP_STYLE}
+        showsUserLocation={false}
+        showsCompass={false}
+        showsMyLocationButton={false}
+      >
+        {hazards.map((hz) => {
+          const hc = HAZARD_COLORS[hz.type] || HAZARD_COLORS.caution;
+          return (
+            <Circle
+              key={hz.id}
+              center={hz.center}
+              radius={hz.radius}
+              fillColor={hc.fill}
+              strokeColor={hc.stroke}
+              strokeWidth={1.5}
+            />
+          );
+        })}
+
+        <Marker coordinate={userCoords} anchor={{ x: 0.5, y: 0.8 }}>
+          <TeamMarker member={USER_PROFILE} isUser />
+        </Marker>
+
+        {filteredTeam.map((m) => (
+          <Marker key={m.id} coordinate={m.coords} anchor={{ x: 0.5, y: 0.8 }}>
+            <TeamMarker member={m} />
+          </Marker>
+        ))}
+      </MapView>
+
+      <View style={styles.hamburger}>
+        <HamburgerButton />
+      </View>
+
+      <ICSBanner profile={USER_PROFILE} />
+
+      <MapLegend visibleCount={filteredTeam.length} totalCount={TEAM.length} />
+
+      {/* Simulation toggle button */}
+      <TouchableOpacity
+        style={[styles.simButton, simRunning && styles.simButtonActive]}
+        onPress={() => setSimRunning((v) => !v)}
+      >
+        <Ionicons
+          name={simRunning ? 'stop-circle' : 'play-circle'}
+          size={14}
+          color={simRunning ? Colors.danger : Colors.textTertiary}
+        />
+        <Text style={[styles.simLabel, simRunning && styles.simLabelActive]}>
+          {simRunning ? 'STOP SIM' : 'RUN SIM'}
+        </Text>
+      </TouchableOpacity>
+ 
+
+      {/* Bottom controls */}
+      <View style={styles.controls}>
+        <TouchableOpacity style={styles.controlButton} onPress={() => setShowFilter(true)}>
+          <Ionicons name="filter" size={18} color={Colors.cyan} />
+          <Text style={styles.controlLabel}>FILTER</Text>
+          {activeFilterCount > 0 && (
+            <View style={styles.badge}>
+              <Text style={styles.badgeText}>{activeFilterCount}</Text>
+            </View>
+          )}
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.manDownButton} onPress={handleManDown} activeOpacity={0.7}>
+          <Ionicons name="alert-circle" size={28} color={Colors.danger} />
+          <Text style={styles.manDownLabel}>MAN{'\n'}DOWN</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.controlButton}
+          onPress={() => mapRef.current?.animateToRegion(INITIAL_REGION, 300)}
+        >
+          <Ionicons name="locate" size={18} color={Colors.cyan} />
+          <Text style={styles.controlLabel}>CENTER</Text>
+        </TouchableOpacity>
+      </View>
+
+      <FilterPanel
+        visible={showFilter}
+        onClose={() => setShowFilter(false)}
+        filters={filters}
+        setFilters={setFilters}
+        divisions={divisions}
+      />
+
+      {/* Auto man-down 15-second warning */}
+      <AutoManDownWarning
+        visible={warningActive}
+        countdown={countdown}
+        onDismiss={dismiss}
+      />
+
+      {/* Manual / auto-triggered man-down result overlay */}
+      <ManDownOverlay
+        visible={manDownActive}
+        responders={manDownResponders}
+        onClose={clearManDown}
+      />
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+    backgroundColor: Colors.bg,
+  },
+  hamburger: {
+    position: 'absolute',
+    top: 110,
+    left: 12,
+    zIndex: 10,
+    backgroundColor: Colors.surface,
+    borderRadius: 4,
+    borderWidth: 1,
+    borderColor: Colors.cyanBorder,
+    padding: 10,
+  },
+  controls: {
+    position: 'absolute',
+    bottom: 24,
+    left: 12,
+    right: 12,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-end',
+  },
+  controlButton: {
+    backgroundColor: Colors.surface,
+    borderRadius: 4,
+    borderWidth: 1,
+    borderColor: Colors.cyanBorder,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    alignItems: 'center',
+    gap: 4,
+    minWidth: 70,
+  },
+  controlLabel: {
+    fontSize: 8,
+    fontWeight: '700',
+    fontFamily: 'monospace',
+    color: Colors.cyan,
+    letterSpacing: 1.5,
+  },
+  badge: {
+    position: 'absolute',
+    top: -5,
+    right: -5,
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: Colors.cyan,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  badgeText: {
+    fontSize: 9,
+    fontWeight: '700',
+    color: Colors.bg,
+    fontFamily: 'monospace',
+  },
+  manDownButton: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: Colors.surface,
+    borderWidth: 2,
+    borderColor: Colors.danger + '60',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 2,
+    shadowColor: Colors.danger,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.4,
+    shadowRadius: 16,
+    elevation: 10,
+  },
+  manDownLabel: {
+    fontSize: 8,
+    fontWeight: '700',
+    fontFamily: 'monospace',
+    color: Colors.danger,
+    letterSpacing: 1.5,
+    textAlign: 'center',
+    lineHeight: 10,
+  },
+  simButton: {
+    position: 'absolute',
+    top: 160,
+    left: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    backgroundColor: Colors.surface,
+    borderRadius: 4,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    zIndex: 10,
+  },
+  simButtonActive: {
+    borderColor: Colors.danger + '60',
+    backgroundColor: Colors.dangerFaint,
+  },
+  simLabel: {
+    fontSize: 8,
+    fontWeight: '700',
+    fontFamily: 'monospace',
+    color: Colors.textTertiary,
+    letterSpacing: 1.5,
+  },
+  simLabelActive: {
+    color: Colors.danger,
+  },
+});
