@@ -4,7 +4,7 @@ import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import MapView, { Circle, Marker } from 'react-native-maps';
 
 import HamburgerButton from '../../../../components/header/HamburgerButton';
-import { Colors } from '../../../../constants/colors';
+import { useTheme } from '../../../../constants/theme';
 import { HAZARD_ZONES, TEAM, USER_PROFILE } from '../../../../constants/mockData';
 
 import AutoManDownWarning from '../../../../components/map/AutoManDownWarning';
@@ -40,8 +40,12 @@ export default function MapScreen() {
     hazards: true,
   });
 
-  //simulation toggle - off by default 
+  //simulation toggle - off by default
   const [simRunning, setSimRunning] = useState(false);
+
+  const { colors } = useTheme();
+  const styles = makeStyles(colors);
+
   const { manDownActive, manDownResponders, handleManDown, clearManDown } = useManDown();
   //simulated location - returns real coords when sim is off 
   const userCoords = useSimulatedLocation(simRunning);
@@ -124,7 +128,7 @@ export default function MapScreen() {
         ))}
       </MapView>
 
-      <View style={styles.hamburger}>
+      <View style={{ position: 'absolute', top: 110, left: 12, zIndex: 10 }}>
         <HamburgerButton />
       </View>
 
@@ -140,7 +144,7 @@ export default function MapScreen() {
         <Ionicons
           name={simRunning ? 'stop-circle' : 'play-circle'}
           size={14}
-          color={simRunning ? Colors.danger : Colors.textTertiary}
+          color={simRunning ? colors.urgent : colors.text3}
         />
         <Text style={[styles.simLabel, simRunning && styles.simLabelActive]}>
           {simRunning ? 'STOP SIM' : 'RUN SIM'}
@@ -151,7 +155,7 @@ export default function MapScreen() {
       {/* Bottom controls */}
       <View style={styles.controls}>
         <TouchableOpacity style={styles.controlButton} onPress={() => setShowFilter(true)}>
-          <Ionicons name="filter" size={18} color={Colors.cyan} />
+          <Ionicons name="filter" size={18} color={colors.info} />
           <Text style={styles.controlLabel}>FILTER</Text>
           {activeFilterCount > 0 && (
             <View style={styles.badge}>
@@ -161,7 +165,7 @@ export default function MapScreen() {
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.manDownButton} onPress={handleManDown} activeOpacity={0.7}>
-          <Ionicons name="alert-circle" size={28} color={Colors.danger} />
+          <Ionicons name="alert-circle" size={28} color={colors.urgent} />
           <Text style={styles.manDownLabel}>MAN{'\n'}DOWN</Text>
         </TouchableOpacity>
 
@@ -169,7 +173,7 @@ export default function MapScreen() {
           style={styles.controlButton}
           onPress={() => mapRef.current?.animateToRegion(INITIAL_REGION, 300)}
         >
-          <Ionicons name="locate" size={18} color={Colors.cyan} />
+          <Ionicons name="locate" size={18} color={colors.info} />
           <Text style={styles.controlLabel}>CENTER</Text>
         </TouchableOpacity>
       </View>
@@ -199,118 +203,104 @@ export default function MapScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    backgroundColor: Colors.bg,
-  },
-  hamburger: {
-    position: 'absolute',
-    top: 110,
-    left: 12,
-    zIndex: 10,
-    backgroundColor: Colors.surface,
-    borderRadius: 4,
-    borderWidth: 1,
-    borderColor: Colors.cyanBorder,
-    padding: 10,
-  },
-  controls: {
-    position: 'absolute',
-    bottom: 24,
-    left: 12,
-    right: 12,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-end',
-  },
-  controlButton: {
-    backgroundColor: Colors.surface,
-    borderRadius: 4,
-    borderWidth: 1,
-    borderColor: Colors.cyanBorder,
-    paddingVertical: 10,
-    paddingHorizontal: 14,
-    alignItems: 'center',
-    gap: 4,
-    minWidth: 70,
-  },
-  controlLabel: {
-    fontSize: 8,
-    fontWeight: '700',
-    fontFamily: 'monospace',
-    color: Colors.cyan,
-    letterSpacing: 1.5,
-  },
-  badge: {
-    position: 'absolute',
-    top: -5,
-    right: -5,
-    width: 16,
-    height: 16,
-    borderRadius: 8,
-    backgroundColor: Colors.cyan,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  badgeText: {
-    fontSize: 9,
-    fontWeight: '700',
-    color: Colors.bg,
-    fontFamily: 'monospace',
-  },
-  manDownButton: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: Colors.surface,
-    borderWidth: 2,
-    borderColor: Colors.danger + '60',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 2,
-    shadowColor: Colors.danger,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.4,
-    shadowRadius: 16,
-    elevation: 10,
-  },
-  manDownLabel: {
-    fontSize: 8,
-    fontWeight: '700',
-    fontFamily: 'monospace',
-    color: Colors.danger,
-    letterSpacing: 1.5,
-    textAlign: 'center',
-    lineHeight: 10,
-  },
-  simButton: {
-    position: 'absolute',
-    top: 160,
-    left: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-    backgroundColor: Colors.surface,
-    borderRadius: 4,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    paddingVertical: 6,
-    paddingHorizontal: 10,
-    zIndex: 10,
-  },
-  simButtonActive: {
-    borderColor: Colors.danger + '60',
-    backgroundColor: Colors.dangerFaint,
-  },
-  simLabel: {
-    fontSize: 8,
-    fontWeight: '700',
-    fontFamily: 'monospace',
-    color: Colors.textTertiary,
-    letterSpacing: 1.5,
-  },
-  simLabelActive: {
-    color: Colors.danger,
-  },
-});
+function makeStyles(colors) {
+  return StyleSheet.create({
+    screen: { flex: 1, backgroundColor: colors.bg },
+    controls: {
+      position: 'absolute',
+      bottom: 24,
+      left: 12,
+      right: 12,
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'flex-end',
+    },
+    controlButton: {
+      backgroundColor: colors.surface1,
+      borderRadius: 4,
+      borderWidth: 1,
+      borderColor: colors.info + '40',
+      paddingVertical: 10,
+      paddingHorizontal: 14,
+      alignItems: 'center',
+      gap: 4,
+      minWidth: 70,
+    },
+    controlLabel: {
+      fontSize: 8,
+      fontWeight: '700',
+      fontFamily: 'monospace',
+      color: colors.info,
+      letterSpacing: 1.5,
+    },
+    badge: {
+      position: 'absolute',
+      top: -5,
+      right: -5,
+      width: 16,
+      height: 16,
+      borderRadius: 8,
+      backgroundColor: colors.info,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    badgeText: {
+      fontSize: 9,
+      fontWeight: '700',
+      color: colors.bg,
+      fontFamily: 'monospace',
+    },
+    manDownButton: {
+      width: 80,
+      height: 80,
+      borderRadius: 40,
+      backgroundColor: colors.surface1,
+      borderWidth: 2,
+      borderColor: colors.urgent + '60',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 2,
+      shadowColor: colors.urgent,
+      shadowOffset: { width: 0, height: 0 },
+      shadowOpacity: 0.4,
+      shadowRadius: 16,
+      elevation: 10,
+    },
+    manDownLabel: {
+      fontSize: 8,
+      fontWeight: '700',
+      fontFamily: 'monospace',
+      color: colors.urgent,
+      letterSpacing: 1.5,
+      textAlign: 'center',
+      lineHeight: 10,
+    },
+    simButton: {
+      position: 'absolute',
+      top: 160,
+      left: 12,
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 5,
+      backgroundColor: colors.surface1,
+      borderRadius: 4,
+      borderWidth: 1,
+      borderColor: colors.border,
+      paddingVertical: 6,
+      paddingHorizontal: 10,
+      zIndex: 10,
+    },
+    simButtonActive: {
+      borderColor: colors.urgent + '60',
+      backgroundColor: colors.urgent + '18',
+    },
+    simLabel: {
+      fontSize: 8,
+      fontWeight: '700',
+      fontFamily: 'monospace',
+      color: colors.text3,
+      letterSpacing: 1.5,
+    },
+    simLabelActive: { color: colors.urgent },
+  });
+}
