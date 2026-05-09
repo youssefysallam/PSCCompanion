@@ -9,33 +9,51 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { Colors, StatusStyles } from '../../constants/colors';
+import { buildStatusStyles, useTheme } from '../../constants/theme';
 
 const RADIUS_OPTIONS = [0, 50, 100, 200, 500];
 
 export default function FilterPanel({ visible, onClose, filters, setFilters, divisions = [] }) {
+  const { colors } = useTheme();
+  const StatusStyles = buildStatusStyles(colors);
+
+  const chipInactive = { backgroundColor: colors.surface2, borderColor: colors.border };
+  const chipActive   = { backgroundColor: colors.surface3, borderColor: colors.text1 + '45' };
+
   return (
     <Modal visible={visible} transparent animationType="slide">
-      <Pressable style={styles.overlay} onPress={onClose}>
-        <Pressable style={styles.sheet} onPress={(e) => e.stopPropagation()}>
-          <View style={styles.glowLine} />
-          <View style={styles.handle} />
+      <Pressable
+        style={[styles.overlay, { backgroundColor: 'rgba(3,7,18,0.8)' }]}
+        onPress={onClose}
+      >
+        <Pressable
+          style={[styles.sheet, { backgroundColor: colors.surface1, borderTopColor: colors.border }]}
+          onPress={(e) => e.stopPropagation()}
+        >
+          <View style={[styles.glowLine, { backgroundColor: colors.border }]} />
+          <View style={[styles.handle, { backgroundColor: colors.text3 }]} />
 
-          <Text style={styles.title}>FILTER TEAMMATES</Text>
-          <Text style={styles.subtitle}>Narrow down who appears on the map</Text>
+          <Text style={[styles.title, { color: colors.text1 }]}>FILTER TEAMMATES</Text>
+          <Text style={[styles.subtitle, { color: colors.text3 }]}>
+            Narrow down who appears on the map
+          </Text>
 
           {/* Division */}
-          <Text style={styles.sectionTitle}>DIVISION</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipRow}>
+          <Text style={[styles.sectionTitle, { color: colors.text2 }]}>DIVISION</Text>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.chipRow}
+          >
             {divisions.map((div) => {
               const active = filters.division === div;
               return (
                 <TouchableOpacity
                   key={div}
                   onPress={() => setFilters({ ...filters, division: div })}
-                  style={[styles.chip, active && styles.chipActive]}
+                  style={[styles.chip, active ? chipActive : chipInactive]}
                 >
-                  <Text style={[styles.chipText, active && styles.chipTextActive]}>
+                  <Text style={[styles.chipText, { color: active ? colors.text1 : colors.text3 }]}>
                     {div.toUpperCase()}
                   </Text>
                 </TouchableOpacity>
@@ -44,21 +62,35 @@ export default function FilterPanel({ visible, onClose, filters, setFilters, div
           </ScrollView>
 
           {/* Status */}
-          <Text style={styles.sectionTitle}>STATUS</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipRow}>
+          <Text style={[styles.sectionTitle, { color: colors.text2 }]}>STATUS</Text>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.chipRow}
+          >
             {['All', ...Object.keys(StatusStyles)].map((key) => {
               const active = filters.status === key;
-              const s = key === 'All' ? { color: Colors.cyan } : StatusStyles[key];
+              const s = StatusStyles[key];
+              const isAll = key === 'All';
               return (
                 <TouchableOpacity
                   key={key}
                   onPress={() => setFilters({ ...filters, status: key })}
                   style={[
                     styles.chip,
-                    active && { backgroundColor: s.bg || Colors.cyanFaint, borderColor: s.color + '50' },
+                    active
+                      ? isAll
+                        ? chipActive
+                        : { backgroundColor: s.color + '15', borderColor: s.color + '50' }
+                      : chipInactive,
                   ]}
                 >
-                  <Text style={[styles.chipText, active && { color: s.color }]}>
+                  <Text
+                    style={[
+                      styles.chipText,
+                      { color: active ? (isAll ? colors.text1 : s.color) : colors.text3 },
+                    ]}
+                  >
                     {key.toUpperCase()}
                   </Text>
                 </TouchableOpacity>
@@ -67,8 +99,12 @@ export default function FilterPanel({ visible, onClose, filters, setFilters, div
           </ScrollView>
 
           {/* Radius */}
-          <Text style={styles.sectionTitle}>NEARBY RADIUS</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipRow}>
+          <Text style={[styles.sectionTitle, { color: colors.text2 }]}>NEARBY RADIUS</Text>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.chipRow}
+          >
             {RADIUS_OPTIONS.map((r) => {
               const active = filters.radius === r;
               const label = r === 0 ? 'ALL' : `${r}m`;
@@ -76,9 +112,9 @@ export default function FilterPanel({ visible, onClose, filters, setFilters, div
                 <TouchableOpacity
                   key={r}
                   onPress={() => setFilters({ ...filters, radius: r })}
-                  style={[styles.chip, active && styles.chipActive]}
+                  style={[styles.chip, active ? chipActive : chipInactive]}
                 >
-                  <Text style={[styles.chipText, active && styles.chipTextActive]}>
+                  <Text style={[styles.chipText, { color: active ? colors.text1 : colors.text3 }]}>
                     {label}
                   </Text>
                 </TouchableOpacity>
@@ -87,23 +123,32 @@ export default function FilterPanel({ visible, onClose, filters, setFilters, div
           </ScrollView>
 
           {/* Overlays */}
-          <Text style={styles.sectionTitle}>OVERLAYS</Text>
+          <Text style={[styles.sectionTitle, { color: colors.text2 }]}>OVERLAYS</Text>
           <TouchableOpacity
             onPress={() => setFilters({ ...filters, hazards: !filters.hazards })}
-            style={[styles.toggleRow, filters.hazards && { borderColor: Colors.danger + '50' }]}
+            style={[
+              styles.toggleRow,
+              {
+                backgroundColor: colors.surface2,
+                borderColor: filters.hazards ? colors.urgent + '50' : colors.border,
+              },
+            ]}
           >
             <Ionicons
               name={filters.hazards ? 'checkbox' : 'square-outline'}
               size={18}
-              color={filters.hazards ? Colors.danger : Colors.textTertiary}
+              color={filters.hazards ? colors.urgent : colors.text3}
             />
-            <Text style={[styles.toggleLabel, filters.hazards && { color: Colors.danger }]}>
+            <Text style={[styles.toggleLabel, { color: filters.hazards ? colors.urgent : colors.text3 }]}>
               HAZARD ZONES
             </Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.applyButton} onPress={onClose}>
-            <Text style={styles.applyText}>APPLY FILTERS</Text>
+          <TouchableOpacity
+            style={[styles.applyButton, { backgroundColor: colors.surface3, borderColor: colors.border }]}
+            onPress={onClose}
+          >
+            <Text style={[styles.applyText, { color: colors.text1 }]}>APPLY FILTERS</Text>
           </TouchableOpacity>
         </Pressable>
       </Pressable>
@@ -112,30 +157,19 @@ export default function FilterPanel({ visible, onClose, filters, setFilters, div
 }
 
 const styles = StyleSheet.create({
-  overlay: {
-    flex: 1,
-    backgroundColor: 'rgba(3,7,18,0.8)',
-    justifyContent: 'flex-end',
-  },
+  overlay: { flex: 1, justifyContent: 'flex-end' },
   sheet: {
-    backgroundColor: Colors.surface,
     borderTopLeftRadius: 4,
     borderTopRightRadius: 4,
     borderTopWidth: 1,
-    borderTopColor: Colors.cyanBorder,
     paddingHorizontal: 16,
     paddingBottom: 40,
   },
-  glowLine: {
-    height: 1,
-    backgroundColor: Colors.cyan + '40',
-    marginBottom: 4,
-  },
+  glowLine: { height: 1, marginBottom: 4 },
   handle: {
     width: 36,
     height: 4,
     borderRadius: 2,
-    backgroundColor: Colors.textTertiary,
     alignSelf: 'center',
     marginBottom: 16,
     marginTop: 8,
@@ -144,7 +178,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '700',
     fontFamily: 'monospace',
-    color: Colors.cyan,
     letterSpacing: 2.5,
     textAlign: 'center',
     marginBottom: 4,
@@ -152,7 +185,6 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: 10,
     fontFamily: 'monospace',
-    color: Colors.textTertiary,
     textAlign: 'center',
     marginBottom: 20,
   },
@@ -160,34 +192,13 @@ const styles = StyleSheet.create({
     fontSize: 9,
     fontWeight: '700',
     fontFamily: 'monospace',
-    color: Colors.textSecondary,
     letterSpacing: 2,
     marginTop: 14,
     marginBottom: 8,
   },
   chipRow: { gap: 6, paddingRight: 16 },
-  chip: {
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: 2,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    backgroundColor: Colors.panel,
-  },
-  chipActive: {
-    backgroundColor: Colors.cyanFaint,
-    borderColor: Colors.cyan + '50',
-  },
-  chipText: {
-    fontSize: 10,
-    fontWeight: '700',
-    fontFamily: 'monospace',
-    color: Colors.textTertiary,
-    letterSpacing: 1,
-  },
-  chipTextActive: {
-    color: Colors.cyan,
-  },
+  chip: { paddingVertical: 6, paddingHorizontal: 12, borderRadius: 2, borderWidth: 1 },
+  chipText: { fontSize: 10, fontWeight: '700', fontFamily: 'monospace', letterSpacing: 1 },
   toggleRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -195,30 +206,8 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 4,
     borderWidth: 1,
-    borderColor: Colors.border,
-    backgroundColor: Colors.panel,
   },
-  toggleLabel: {
-    fontSize: 10,
-    fontWeight: '700',
-    fontFamily: 'monospace',
-    color: Colors.textTertiary,
-    letterSpacing: 1.5,
-  },
-  applyButton: {
-    marginTop: 20,
-    backgroundColor: Colors.cyanFaint,
-    borderWidth: 1,
-    borderColor: Colors.cyanBorder,
-    borderRadius: 4,
-    paddingVertical: 14,
-    alignItems: 'center',
-  },
-  applyText: {
-    fontSize: 12,
-    fontWeight: '700',
-    fontFamily: 'monospace',
-    color: Colors.cyan,
-    letterSpacing: 2,
-  },
+  toggleLabel: { fontSize: 10, fontWeight: '700', fontFamily: 'monospace', letterSpacing: 1.5 },
+  applyButton: { marginTop: 20, borderWidth: 1, borderRadius: 4, paddingVertical: 14, alignItems: 'center' },
+  applyText: { fontSize: 12, fontWeight: '700', fontFamily: 'monospace', letterSpacing: 2 },
 });
