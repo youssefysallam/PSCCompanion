@@ -17,6 +17,7 @@ export const Colors = {
   available: '#7eb281',   // sage
   enRoute:   '#c69556',   // ember
   onScene:   '#c46b66',   // brick
+  urgent:    '#cf4040',   // bright red — needs-help only
   offDuty:   '#7d8087',   // slate
   info:      '#6a8fb8',   // slate blue
 };
@@ -41,7 +42,7 @@ export const StatusStyles = {
     iconLib: 'MaterialCommunityIcons',
   },
   needshelp: {
-    color: Colors.onScene,
+    color: Colors.urgent,
     label: 'Needs help',
     icon: 'alert-circle-outline',
     iconLib: 'MaterialCommunityIcons',

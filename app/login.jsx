@@ -13,6 +13,7 @@ import {
   View,
 } from 'react-native';
 import { Colors } from '../constants/colors';
+import { SplashLogo } from '../components/SplashLogo';
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -27,17 +28,15 @@ export default function LoginScreen() {
 
   return (
     <SafeAreaView style={styles.screen}>
+      <View style={styles.logoArea}>
+        <SplashLogo size={130} />
+      </View>
+
       <KeyboardAvoidingView
         style={styles.inner}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
         <View style={styles.top}>
-          {/* Logo row */}
-          <View style={styles.logoRow}>
-            <View style={styles.logoIcon} />
-            <Text style={styles.logoName}>PSC Companion</Text>
-          </View>
-
           {/* Title */}
           <Text style={styles.title}>Sign in</Text>
           <Text style={styles.subtitle}>
@@ -108,6 +107,12 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.bg,
   },
+  logoArea: {
+    flex: 0.55,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingTop: 16,
+  },
   inner: {
     flex: 1,
     paddingHorizontal: 24,
@@ -115,29 +120,7 @@ const styles = StyleSheet.create({
     paddingBottom: 24,
   },
   top: {
-    flex: 1,
-    justifyContent: 'center',
     gap: 16,
-  },
-
-  logoRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    marginBottom: 8,
-  },
-  logoIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: 9,
-    backgroundColor: Colors.surface1,
-    borderWidth: 0.5,
-    borderColor: Colors.border,
-  },
-  logoName: {
-    fontSize: 15,
-    fontWeight: '500',
-    color: Colors.text1,
   },
 
   title: {

@@ -9,7 +9,27 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import MapView, { Marker } from 'react-native-maps';
 import { Colors } from '../constants/colors';
+
+const INITIAL_REGION = { latitude: 40.7142, longitude: -74.0060, latitudeDelta: 0.006, longitudeDelta: 0.006 };
+
+const DARK_MAP_STYLE = [
+  { elementType: 'geometry', stylers: [{ color: '#0d1117' }] },
+  { elementType: 'labels.text.fill', stylers: [{ color: '#4a6080' }] },
+  { elementType: 'labels.text.stroke', stylers: [{ color: '#0d1117' }] },
+  { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#161b22' }] },
+  { featureType: 'road', elementType: 'geometry.stroke', stylers: [{ color: '#1a2332' }] },
+  { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#040810' }] },
+  { featureType: 'poi', elementType: 'geometry', stylers: [{ color: '#0d1117' }] },
+  { featureType: 'transit', stylers: [{ visibility: 'off' }] },
+];
+
+const MAP_PINS = [
+  { latitude: 40.7155, longitude: -74.0045, color: Colors.available, label: 'R' },
+  { latitude: 40.7132, longitude: -74.0068, color: Colors.enRoute,   label: 'C' },
+  { latitude: 40.7148, longitude: -74.0080, color: Colors.onScene,   label: 'M' },
+];
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -51,16 +71,24 @@ const PAGES = [
     art: () => (
       <View style={artStyles.container}>
         <View style={artStyles.mapPlaceholder}>
-          <View style={artStyles.mapBg} />
-          {[
-            { x: 30, y: 40, color: Colors.available, label: 'R' },
-            { x: 55, y: 55, color: Colors.enRoute, label: 'C' },
-            { x: 75, y: 35, color: Colors.onScene, label: 'M' },
-          ].map((pin, i) => (
-            <View key={i} style={[artStyles.pin, { left: `${pin.x}%`, top: `${pin.y}%`, borderColor: pin.color }]}>
-              <Text style={[artStyles.pinText, { color: pin.color }]}>{pin.label}</Text>
-            </View>
-          ))}
+          <MapView
+            style={StyleSheet.absoluteFillObject}
+            initialRegion={INITIAL_REGION}
+            customMapStyle={DARK_MAP_STYLE}
+            scrollEnabled={false}
+            zoomEnabled={false}
+            pitchEnabled={false}
+            rotateEnabled={false}
+            toolbarEnabled={false}
+          >
+            {MAP_PINS.map((pin, i) => (
+              <Marker key={i} coordinate={{ latitude: pin.latitude, longitude: pin.longitude }} anchor={{ x: 0.5, y: 0.5 }}>
+                <View style={[artStyles.pin, { borderColor: pin.color, backgroundColor: Colors.surface1 }]}>
+                  <Text style={[artStyles.pinText, { color: pin.color }]}>{pin.label}</Text>
+                </View>
+              </Marker>
+            ))}
+          </MapView>
         </View>
         <View style={artStyles.controlsRow}>
           <View style={artStyles.controlBtn}>
@@ -81,17 +109,24 @@ const PAGES = [
       <View style={artStyles.container}>
         <View style={artStyles.alertList}>
           {[
-            { color: Colors.onScene, label: 'Critical', title: 'Man-down reported — Div A' },
-            { color: Colors.enRoute, label: 'Warning', title: 'Structural instability' },
-            { color: Colors.info,    label: 'Info',    title: 'Resource request approved' },
-          ].map((item, i) => (
-            <View key={i} style={artStyles.alertRow}>
+            { color: Colors.onScene, icon: 'warning-outline',           label: 'Critical', title: 'Man-down reported — Div A',   time: '2m ago', big: true  },
+            { color: Colors.enRoute, icon: 'alert-circle-outline',      label: 'Warning',  title: 'Structural instability noted', time: '8m ago', big: false },
+            { color: Colors.info,    icon: 'information-circle-outline', label: 'Info',     title: 'Resource request approved',   time: '14m ago', big: false },
+          ].map((item, i, arr) => (
+            <View key={i} style={[
+              artStyles.alertRow,
+              item.big && artStyles.alertRowUrgent,
+              i < arr.length - 1 && { borderBottomWidth: 0.5, borderBottomColor: Colors.border },
+            ]}>
               <View style={[artStyles.alertBar, { backgroundColor: item.color }]} />
-              <Ionicons name="warning-outline" size={14} color={item.color} style={{ marginLeft: 12 }} />
-              <View style={{ flex: 1, marginLeft: 8 }}>
+              <View style={artStyles.alertInner}>
+                <View style={artStyles.alertTop}>
+                  <Ionicons name={item.icon} size={13} color={item.color} />
+                  <Text style={[artStyles.alertBadge, { color: item.color }]}>{item.label}</Text>
+                  <Text style={artStyles.alertTime}>{item.time}</Text>
+                </View>
                 <Text style={artStyles.alertTitle} numberOfLines={1}>{item.title}</Text>
               </View>
-              <Text style={[artStyles.alertLabel, { color: item.color }]}>{item.label}</Text>
             </View>
           ))}
         </View>
@@ -158,18 +193,10 @@ const artStyles = StyleSheet.create({
 
   mapPlaceholder: {
     width: '90%',
-    height: 160,
+    height: 180,
     borderRadius: 12,
-    backgroundColor: Colors.surface2,
-    borderWidth: 0.5,
-    borderColor: Colors.border,
     overflow: 'hidden',
-    position: 'relative',
     marginBottom: 10,
-  },
-  mapBg: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: Colors.surface2,
   },
   pin: {
     position: 'absolute',
@@ -207,16 +234,17 @@ const artStyles = StyleSheet.create({
   },
   alertRow: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'stretch',
     paddingVertical: 10,
-    paddingRight: 12,
-    borderBottomWidth: 0.5,
-    borderBottomColor: Colors.border,
     position: 'relative',
   },
-  alertBar: { width: 3, position: 'absolute', left: 0, top: 0, bottom: 0 },
+  alertRowUrgent: { paddingVertical: 14 },
+  alertBar: { width: 3, alignSelf: 'stretch', marginRight: 12 },
+  alertInner: { flex: 1, paddingRight: 12, gap: 4 },
+  alertTop: { flexDirection: 'row', alignItems: 'center', gap: 5 },
+  alertBadge: { fontSize: 10, fontWeight: '500' },
+  alertTime: { fontSize: 10, color: Colors.text4, marginLeft: 'auto' },
   alertTitle: { fontSize: 11, fontWeight: '500', color: Colors.text1 },
-  alertLabel: { fontSize: 10, fontWeight: '500' },
 });
 
 export default function TourScreen() {
@@ -302,18 +330,19 @@ const styles = StyleSheet.create({
   },
   copy: {
     paddingHorizontal: 24,
-    gap: 8,
+    paddingBottom: 8,
+    gap: 12,
   },
   pageTitle: {
-    fontSize: 18,
+    fontSize: 26,
     fontWeight: '500',
     color: Colors.text1,
-    letterSpacing: -0.2,
+    letterSpacing: -0.4,
   },
   pageDesc: {
-    fontSize: 12,
+    fontSize: 15,
     color: Colors.text3,
-    lineHeight: 19.2,
+    lineHeight: 23,
   },
   footer: {
     flexDirection: 'row',

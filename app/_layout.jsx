@@ -1,39 +1,48 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Animated, StyleSheet, View } from 'react-native';
+import { Animated, StyleSheet } from 'react-native';
 import 'react-native-gesture-handler';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { AlertsProvider } from '../context/AlertContext';
 import { SplashLogo } from '../components/SplashLogo';
+import { ThemeContext, darkColors, lightColors } from '../constants/theme';
 
-// Keep the native splash visible while we mount our animated one.
 SplashScreen.preventAutoHideAsync();
 
-// Minimum time (ms) the animated splash stays visible so the build always
-// plays fully even on fast devices. Equal to lead-in + 4 cells = 160 + 4×320.
 const MIN_SPLASH_MS = 1440;
+const THEME_KEY = 'theme';
 
 export default function RootLayout() {
   const [appReady, setAppReady] = useState(false);
   const [splashDone, setSplashDone] = useState(false);
+  const [isDark, setIsDark] = useState(true);
   const fadeAnim = useRef(new Animated.Value(1)).current;
   const startTime = useRef(Date.now());
 
-  // Dismiss native splash on first layout and mark app ready.
+  useEffect(() => {
+    AsyncStorage.getItem(THEME_KEY).then((val) => {
+      if (val === 'light') setIsDark(false);
+    });
+  }, []);
+
+  const toggleTheme = useCallback(async () => {
+    const next = !isDark;
+    setIsDark(next);
+    await AsyncStorage.setItem(THEME_KEY, next ? 'dark' : 'light');
+  }, [isDark]);
+
   const onRootLayout = useCallback(async () => {
     await SplashScreen.hideAsync();
     setAppReady(true);
   }, []);
 
-  // Once app signals ready, wait for the animation to finish, then fade out.
   useEffect(() => {
     if (!appReady) return;
-
     const elapsed = Date.now() - startTime.current;
     const remaining = Math.max(0, MIN_SPLASH_MS - elapsed);
-
     const timer = setTimeout(() => {
       Animated.timing(fadeAnim, {
         toValue: 0,
@@ -41,27 +50,30 @@ export default function RootLayout() {
         useNativeDriver: true,
       }).start(() => setSplashDone(true));
     }, remaining);
-
     return () => clearTimeout(timer);
   }, [appReady]);
 
+  const colors = isDark ? darkColors : lightColors;
+
   return (
     <AlertsProvider>
-      <GestureHandlerRootView style={styles.root} onLayout={onRootLayout}>
-        <StatusBar style="light" />
-        <Stack screenOptions={{ headerShown: false }}>
-          <Stack.Screen name="(drawer)" />
-          <Stack.Screen name="onboarding" options={{ headerShown: false }} />
-          <Stack.Screen name="tour" options={{ headerShown: false }} />
-          <Stack.Screen name="login" options={{ headerShown: false }} />
-        </Stack>
+      <ThemeContext.Provider value={{ colors, isDark, toggleTheme }}>
+        <GestureHandlerRootView style={styles.root} onLayout={onRootLayout}>
+          <StatusBar style={isDark ? 'light' : 'dark'} />
+          <Stack screenOptions={{ headerShown: false }}>
+            <Stack.Screen name="(drawer)" />
+            <Stack.Screen name="onboarding" options={{ headerShown: false }} />
+            <Stack.Screen name="tour" options={{ headerShown: false }} />
+            <Stack.Screen name="login" options={{ headerShown: false }} />
+          </Stack>
 
-        {!splashDone && (
-          <Animated.View style={[styles.splash, { opacity: fadeAnim }]} pointerEvents="none">
-            <SplashLogo size={160} />
-          </Animated.View>
-        )}
-      </GestureHandlerRootView>
+          {!splashDone && (
+            <Animated.View style={[styles.splash, { opacity: fadeAnim }]} pointerEvents="none">
+              <SplashLogo size={160} />
+            </Animated.View>
+          )}
+        </GestureHandlerRootView>
+      </ThemeContext.Provider>
     </AlertsProvider>
   );
 }
