@@ -23,7 +23,7 @@ import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import Swipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
 import HamburgerButton from '../../../components/header/HamburgerButton';
 import { Colors } from '../../../constants/colors';
-import { ALERTS } from '../../../constants/mockData';
+import { useAlerts } from '../../../context/AlertContext';
 
 const TYPE_STYLES = {
   urgent: { color: Colors.danger, bg: Colors.dangerFaint, bgStrong: Colors.dangerStrong, icon: 'warning' },
@@ -146,7 +146,7 @@ function PanelHeader({ title, color = Colors.cyan }) {
 }
 
 export default function AlertsScreen() {
-  const [alerts, setAlert] = React.useState(ALERTS);
+  const { alerts, updateAlertStatus } = useAlerts();
   const STATUS_PRIORITY = {urgent: 0, warning: 1, info: 2};
 
   const activeAlerts = alerts
@@ -168,13 +168,6 @@ export default function AlertsScreen() {
     alerts => alerts.status === 'resolved'
   );
 
-  function updateAlertStatus(id, newState) {
-    setAlert(prev => 
-      prev.map(alert => 
-        alert.id === id ? {...alert, status: newState} : alert
-      )
-    );
-  }
 
   return (
     <View style={styles.screen}>

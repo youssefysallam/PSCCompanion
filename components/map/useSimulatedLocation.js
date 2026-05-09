@@ -5,7 +5,7 @@ import { USER_PROFILE } from '../../constants/mockData';
 // ~60m north of center = safely outside
 const SIM_START = { latitude: 40.71474, longitude: -74.0064 };
 // ~20m inside the zone
-const SIM_INSIDE = { latitude: 40.71418, longitude: -74.0064 };
+const SIM_INSIDE = { latitude: 40.7145, longitude: -74.0068 };
 
 export function useSimulatedLocation(isRunning) {
   const [coords, setCoords] = useState(USER_PROFILE.coords);
