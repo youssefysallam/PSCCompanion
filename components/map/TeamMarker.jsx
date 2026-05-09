@@ -1,10 +1,10 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { buildStatusStyles, useTheme } from '../../constants/theme';
 
 export default function TeamMarker({ member, isUser = false }) {
   const { colors } = useTheme();
-  const StatusStyles = buildStatusStyles(colors);
+  const StatusStyles = useMemo(() => buildStatusStyles(colors), [colors]);
   const s = StatusStyles[member.status] || StatusStyles.offline;
   const isUrgent = member.status === 'needshelp';
   const label = isUser ? 'YOU' : member.name.split(' ').pop();

@@ -44,7 +44,7 @@ export default function MapScreen() {
   const [simRunning, setSimRunning] = useState(false);
 
   const { colors } = useTheme();
-  const styles = makeStyles(colors);
+  const styles = useMemo(() => makeStyles(colors), [colors]);
 
   const { manDownActive, manDownResponders, handleManDown, clearManDown } = useManDown();
   //simulated location - returns real coords when sim is off 

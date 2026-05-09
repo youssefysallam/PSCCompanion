@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { DrawerActions } from '@react-navigation/native';
 import { useNavigation } from 'expo-router';
-import { StyleSheet, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, TouchableOpacity } from 'react-native';
 import { useTheme } from '../../constants/theme';
 
 export default function HamburgerButton() {
@@ -9,14 +9,13 @@ export default function HamburgerButton() {
   const { colors } = useTheme();
 
   return (
-    <View style={styles.glass}>
-      <TouchableOpacity
-        activeOpacity={0.7}
-        onPress={() => navigation.dispatch(DrawerActions.openDrawer())}
-      >
-        <Ionicons name="menu" size={22} color={colors.text2} />
-      </TouchableOpacity>
-    </View>
+    <TouchableOpacity
+      style={styles.glass}
+      activeOpacity={0.7}
+      onPress={() => navigation.dispatch(DrawerActions.openDrawer())}
+    >
+      <Ionicons name="menu" size={22} color={colors.text2} />
+    </TouchableOpacity>
   );
 }
 
