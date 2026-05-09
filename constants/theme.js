@@ -54,7 +54,7 @@ export const buildStatusStyles = (colors) => ({
     iconLib: 'MaterialCommunityIcons',
   },
   onscene: {
-    color: colors.info,
+    color: colors.onScene,
     label: 'On scene',
     icon: 'map-marker-outline',
     iconLib: 'MaterialCommunityIcons',
