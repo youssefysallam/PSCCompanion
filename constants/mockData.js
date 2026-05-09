@@ -204,6 +204,8 @@ export const ALERTS = [
     createdAt: NOW - 60000,
     status: 'active',
     requiresAction: true,
+    linkedMemberId: '5',       
+    linkedCoords: { latitude: 40.7145, longitude: -74.0068 }, 
   },
   {
     id: '2',
@@ -213,6 +215,8 @@ export const ALERTS = [
     createdAt: NOW - 2 * MINUTE,
     status: 'active',
     requiresAction: true,
+    linkedMemberId: '2',         
+    linkedCoords: { latitude: 40.7180, longitude: -74.0010 },
   },
   {
     id: '3',
@@ -292,7 +296,8 @@ export const ALERTS = [
     title: 'Battery critical warning',
     detail: 'Low battery 15% — charge device',
     createdAt: NOW - 5 * HOUR,
-    status: 'resolved',
+    status: 'active',
     requiresAction: false,
+    resolveKey: 'battery_low', 
   },
 ];

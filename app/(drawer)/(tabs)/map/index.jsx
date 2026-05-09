@@ -22,7 +22,11 @@ import MapLegend from '../../../../components/map/MapLegend';
 import TeamMarker from '../../../../components/map/TeamMarker';
 import { useAutoManDown } from '../../../../components/map/useAutoManDown';
 import { useManDown } from '../../../../components/map/useManDown';
+import { useProximityResolver } from '../../../../components/map/useProximityResolver';
 import { useSimulatedLocation } from '../../../../components/map/useSimulatedLocation';
+import { useBatteryResolver } from '../../../../hooks/useBatteryResolver';
+
+
 
 
 export default function MapScreen() {
@@ -42,6 +46,9 @@ export default function MapScreen() {
   //simulated location - returns real coords when sim is off 
   const userCoords = useSimulatedLocation(simRunning);
 
+  useProximityResolver(userCoords);
+  useBatteryResolver();
+  
   // Auto man-down detection
   const { warningActive, countdown, dismiss } = useAutoManDown({
     coords: userCoords,
