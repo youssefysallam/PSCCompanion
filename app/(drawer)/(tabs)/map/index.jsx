@@ -40,6 +40,8 @@ export default function MapScreen() {
     hazards: true,
   });
 
+  const [selectedMemberId, setSelectedMemberId] = useState(null);
+
   //simulation toggle - off by default
   const [simRunning, setSimRunning] = useState(false);
 
@@ -102,6 +104,7 @@ export default function MapScreen() {
         showsUserLocation={false}
         showsCompass={false}
         showsMyLocationButton={false}
+        onPress={() => setSelectedMemberId(null)}
       >
         {hazards.map((hz) => {
           const hc = HAZARD_COLORS[hz.type] || HAZARD_COLORS.caution;
@@ -117,13 +120,22 @@ export default function MapScreen() {
           );
         })}
 
-        <Marker coordinate={userCoords} anchor={{ x: 0.5, y: 0.8 }}>
-          <TeamMarker member={USER_PROFILE} isUser />
+        <Marker coordinate={userCoords} anchor={{ x: 0.5, y: 1.0 }}>
+          <TeamMarker
+            member={USER_PROFILE}
+            isUser
+            selected={selectedMemberId === USER_PROFILE.id}
+            onPress={() => setSelectedMemberId(prev => prev === USER_PROFILE.id ? null : USER_PROFILE.id)}
+          />
         </Marker>
 
         {filteredTeam.map((m) => (
-          <Marker key={m.id} coordinate={m.coords} anchor={{ x: 0.5, y: 0.8 }}>
-            <TeamMarker member={m} />
+          <Marker key={m.id} coordinate={m.coords} anchor={{ x: 0.5, y: 1.0 }}>
+            <TeamMarker
+              member={m}
+              selected={selectedMemberId === m.id}
+              onPress={() => setSelectedMemberId(prev => prev === m.id ? null : m.id)}
+            />
           </Marker>
         ))}
       </MapView>

@@ -1,17 +1,38 @@
 import React, { useMemo } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { buildStatusStyles, useTheme } from '../../constants/theme';
 
-export default function TeamMarker({ member, isUser = false }) {
+export default function TeamMarker({ member, isUser = false, selected = false, onPress }) {
   const { colors } = useTheme();
   const StatusStyles = useMemo(() => buildStatusStyles(colors), [colors]);
   const s = StatusStyles[member.status] || StatusStyles.offline;
   const isUrgent = member.status === 'needshelp';
-  const label = isUser ? 'YOU' : member.name.split(' ').pop();
+
+  // Up to 2 initials from the cleaned name
+  const cleanName = member.name.replace('You (', '').replace(')', '').trim();
+  const initials = cleanName
+    .split(' ')
+    .filter(Boolean)
+    .map((n) => n[0].toUpperCase())
+    .slice(0, 2)
+    .join('');
+
   const circleSize = isUser ? 42 : 36;
 
   return (
-    <View style={styles.container}>
+    <TouchableOpacity activeOpacity={0.75} onPress={onPress} style={styles.container}>
+      {/* Tooltip area — always present to keep anchor stable */}
+      <View style={styles.tooltipArea}>
+        {selected && (
+          <View style={[styles.tooltip, { backgroundColor: colors.surface1, borderColor: colors.border }]}>
+            <Text style={[styles.tooltipText, { color: colors.text1 }]} numberOfLines={1}>
+              {cleanName}
+            </Text>
+          </View>
+        )}
+      </View>
+
+      {/* Circle + status dot */}
       <View style={styles.markerWrapper}>
         <View
           style={[
@@ -20,8 +41,8 @@ export default function TeamMarker({ member, isUser = false }) {
               width: circleSize,
               height: circleSize,
               borderRadius: circleSize / 2,
-              borderColor: isUser ? colors.text1 : s.color + (isUrgent ? 'ff' : '70'),
-              backgroundColor: s.color + '12',
+              backgroundColor: isUser ? colors.surface2 : s.color + 'cc',
+              borderColor: isUser ? colors.text1 : s.color + (isUrgent ? 'ff' : '99'),
               borderWidth: isUser ? 2 : isUrgent ? 2 : 1.5,
             },
             isUrgent && {
@@ -33,17 +54,14 @@ export default function TeamMarker({ member, isUser = false }) {
             },
           ]}
         >
-          <Text style={[styles.initial, { color: isUser ? colors.text1 : s.color }]}>
-            {label[0]}
+          <Text style={[styles.initial, { color: isUser ? colors.text1 : '#fff' }]}>
+            {initials}
           </Text>
         </View>
         <View
           style={[
             styles.dot,
-            {
-              backgroundColor: s.color,
-              borderColor: colors.bg,
-            },
+            { backgroundColor: s.color, borderColor: colors.bg },
             isUrgent && {
               shadowColor: s.color,
               shadowOffset: { width: 0, height: 0 },
@@ -53,18 +71,30 @@ export default function TeamMarker({ member, isUser = false }) {
           ]}
         />
       </View>
-      <Text
-        style={[styles.label, { color: isUser ? colors.text2 : s.color + '90' }]}
-        numberOfLines={1}
-      >
-        {label}
-      </Text>
-    </View>
+    </TouchableOpacity>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { alignItems: 'center', width: 50 },
+  container: { alignItems: 'center', width: 70 },
+  tooltipArea: { height: 26, alignItems: 'center', justifyContent: 'flex-end', width: 70 },
+  tooltip: {
+    paddingVertical: 3,
+    paddingHorizontal: 8,
+    borderRadius: 4,
+    borderWidth: 0.5,
+    marginBottom: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.35,
+    shadowRadius: 3,
+    elevation: 3,
+  },
+  tooltipText: {
+    fontSize: 10,
+    fontWeight: '600',
+    fontFamily: 'monospace',
+  },
   markerWrapper: { position: 'relative' },
   circle: { alignItems: 'center', justifyContent: 'center' },
   dot: {
@@ -76,12 +106,5 @@ const styles = StyleSheet.create({
     bottom: 0,
     right: 0,
   },
-  initial: { fontSize: 13, fontWeight: '700', fontFamily: 'monospace' },
-  label: {
-    fontSize: 8,
-    fontWeight: '700',
-    fontFamily: 'monospace',
-    letterSpacing: 0.5,
-    marginTop: 5,
-  },
+  initial: { fontSize: 12, fontWeight: '700', fontFamily: 'monospace' },
 });
