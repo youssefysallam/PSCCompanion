@@ -1,10 +1,11 @@
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
-import React, { useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 import { SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import HamburgerButton from '../../../components/header/HamburgerButton';
 import { buildStatusStyles, useTheme } from '../../../constants/theme';
+import { useUser } from '../../../context/UserContext';
 
 const STATUS_KEYS = ['safe', 'enroute', 'onscene', 'needshelp'];
 const STATUS_SUBLABELS = { safe: 'Safe', enroute: 'Code 2', onscene: 'Code 3', needshelp: 'Alert' };
@@ -24,7 +25,7 @@ export default function CheckInScreen() {
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const insets = useSafeAreaInsets();
 
-  const [currentStatus, setCurrentStatus] = useState('safe');
+  const { userStatus: currentStatus, setUserStatus: setCurrentStatus } = useUser();
 
   const current = StatusStyles[currentStatus];
 

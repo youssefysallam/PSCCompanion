@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import HamburgerButton from '../../../components/header/HamburgerButton';
 import { buildStatusStyles, useTheme } from '../../../constants/theme';
 import { INCIDENTS, USER_PROFILE } from '../../../constants/mockData';
+import { useUser } from '../../../context/UserContext';
 
 function SectionHeader({ icon, iconLib = 'Ionicons', title, colors }) {
   const IconComp = iconLib === 'MaterialCommunityIcons' ? MaterialCommunityIcons : Ionicons;
@@ -27,8 +28,9 @@ export default function ProfileScreen() {
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const insets = useSafeAreaInsets();
 
+  const { userStatus } = useUser();
   const p = USER_PROFILE;
-  const s = StatusStyles[p.status] || StatusStyles.offline;
+  const s = StatusStyles[userStatus] || StatusStyles.offline;
   const incident = INCIDENTS.find((i) => i.id === p.incidentId);
 
   const [now, setNow] = useState(new Date());

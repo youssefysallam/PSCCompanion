@@ -7,10 +7,12 @@ import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-nati
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { buildStatusStyles, useTheme } from '../../constants/theme';
 import { USER_PROFILE } from '../../constants/mockData';
+import { useUser } from '../../context/UserContext';
 
 function MiniProfileCard({ colors, StatusStyles, router }) {
+  const { userStatus } = useUser();
   const p = USER_PROFILE;
-  const s = StatusStyles[p.status] || StatusStyles.offline;
+  const s = StatusStyles[userStatus] || StatusStyles.offline;
   const name = p.name.replace('You (', '').replace(')', '');
   const initial = name.split(' ').pop()[0];
 

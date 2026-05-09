@@ -7,6 +7,7 @@ import { Animated, StyleSheet } from 'react-native';
 import 'react-native-gesture-handler';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { AlertsProvider } from '../context/AlertContext';
+import { UserProvider } from '../context/UserContext';
 import { SplashLogo } from '../components/SplashLogo';
 import { ThemeContext, darkColors, lightColors } from '../constants/theme';
 
@@ -57,23 +58,25 @@ export default function RootLayout() {
 
   return (
     <AlertsProvider>
-      <ThemeContext.Provider value={{ colors, isDark, toggleTheme }}>
-        <GestureHandlerRootView style={styles.root} onLayout={onRootLayout}>
-          <StatusBar style={isDark ? 'light' : 'dark'} />
-          <Stack screenOptions={{ headerShown: false }}>
-            <Stack.Screen name="(drawer)" />
-            <Stack.Screen name="onboarding" options={{ headerShown: false }} />
-            <Stack.Screen name="tour" options={{ headerShown: false }} />
-            <Stack.Screen name="login" options={{ headerShown: false }} />
-          </Stack>
+      <UserProvider>
+        <ThemeContext.Provider value={{ colors, isDark, toggleTheme }}>
+          <GestureHandlerRootView style={styles.root} onLayout={onRootLayout}>
+            <StatusBar style={isDark ? 'light' : 'dark'} />
+            <Stack screenOptions={{ headerShown: false }}>
+              <Stack.Screen name="(drawer)" />
+              <Stack.Screen name="onboarding" options={{ headerShown: false }} />
+              <Stack.Screen name="tour" options={{ headerShown: false }} />
+              <Stack.Screen name="login" options={{ headerShown: false }} />
+            </Stack>
 
-          {!splashDone && (
-            <Animated.View style={[styles.splash, { opacity: fadeAnim }]} pointerEvents="none">
-              <SplashLogo size={160} />
-            </Animated.View>
-          )}
-        </GestureHandlerRootView>
-      </ThemeContext.Provider>
+            {!splashDone && (
+              <Animated.View style={[styles.splash, { opacity: fadeAnim }]} pointerEvents="none">
+                <SplashLogo size={160} />
+              </Animated.View>
+            )}
+          </GestureHandlerRootView>
+        </ThemeContext.Provider>
+      </UserProvider>
     </AlertsProvider>
   );
 }
