@@ -1,162 +1,131 @@
-/**
- * IncidentCard — Large swipeable card, Solo Leveling style.
- * Designed to be used inside a horizontal ScrollView.
- *
- * Props:
- *   incident (object) — { id, type, location, priority, time, units }
- *   width    (number) — card width (passed from parent based on screen size)
- */
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import React, { useMemo } from 'react';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useTheme } from '../../constants/theme';
 
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { Colors } from '../../constants/colors';
+function getIncidentIcon(type, color) {
+  if (type === 'Medical Response')
+    return <MaterialCommunityIcons name="medical-bag" size={22} color={color} />;
+  if (type === 'Vehicle Accident')
+    return <MaterialCommunityIcons name="car-emergency" size={22} color={color} />;
+  return <Ionicons name="flame" size={22} color={color} />;
+}
 
-export default function IncidentCard({ incident, width, onPress }) {
+export default function IncidentCard({ incident, width, onPress, expanded = false }) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const isHigh = incident.priority === 'high';
-  const color = isHigh ? Colors.danger : Colors.warning;
-  const bg = isHigh ? Colors.dangerFaint : Colors.warningFaint;
-  const cardWidth = width || undefined;
+  const severityColor = isHigh ? colors.onScene : colors.enRoute;
+
+  if (expanded) {
+    return (
+      <TouchableOpacity
+        activeOpacity={0.8}
+        onPress={() => onPress && onPress(incident)}
+        style={styles.card}
+      >
+        <View style={[styles.severityBar, { backgroundColor: severityColor }]} />
+        <View style={styles.expandedInner}>
+          <View style={styles.expandedTop}>
+            <View style={styles.iconCol}>
+              {getIncidentIcon(incident.type, severityColor)}
+            </View>
+            <View style={styles.expandedBody}>
+              <Text style={styles.type}>{incident.type}</Text>
+              <Text style={styles.expandedAddress}>{incident.address}</Text>
+            </View>
+            <View style={styles.meta}>
+              <Text style={[styles.codeBadge, { color: severityColor }]}>{incident.id}</Text>
+              <Text style={styles.time}>{incident.time}</Text>
+            </View>
+          </View>
+
+          <View style={styles.statsBar}>
+            <Text style={[styles.statVal, { color: severityColor }]}>{incident.units} units</Text>
+            <View style={styles.statDot} />
+            <Text style={[styles.statVal, { color: severityColor }]}>{incident.distance}</Text>
+          </View>
+
+          {incident.assignedTeam && incident.assignedTeam.length > 0 && (
+            <View style={styles.tagRow}>
+              {incident.assignedTeam.map((name, i) => (
+                <View key={i} style={styles.tag}>
+                  <Text style={styles.tagText}>{name}</Text>
+                </View>
+              ))}
+            </View>
+          )}
+        </View>
+      </TouchableOpacity>
+    );
+  }
 
   return (
     <TouchableOpacity
       activeOpacity={0.8}
       onPress={() => onPress && onPress(incident)}
-      style={[styles.card, { borderColor: color + '35' }, cardWidth ? { width: cardWidth } : null]}
+      style={[styles.card, width ? { width } : null]}
     >
-      {/* Top glow line */}
-      <View style={[styles.glowLine, { backgroundColor: color + '50' }]} />
-
-      {/* Priority tag */}
-      <View style={[styles.priorityBadge, { backgroundColor: bg, borderColor: color + '50' }]}>
-        <Text style={[styles.priorityText, { color }]}>
-          {isHigh ? '! URGENT' : '◉ ACTIVE'}
-        </Text>
-      </View>
-
-      {/* Main content */}
-      <View style={styles.body}>
-        <View style={[styles.iconBox, { backgroundColor: bg, borderColor: color + '40' }]}>
-          <Ionicons
-            name={isHigh ? 'flame' : 'medkit'}
-            size={26}
-            color={color}
-          />
+      <View style={[styles.severityBar, { backgroundColor: severityColor }]} />
+      <View style={styles.inner}>
+        <View style={styles.iconCol}>
+          {getIncidentIcon(incident.type, severityColor)}
         </View>
-
-        <View style={styles.info}>
+        <View style={styles.body}>
           <Text style={styles.type}>{incident.type}</Text>
-          <Text style={styles.location}>{incident.location}</Text>
+          <Text style={styles.address}>{incident.location}</Text>
         </View>
-      </View>
-
-      {/* Footer stats */}
-      <View style={styles.footer}>
-        <View style={styles.stat}>
-          <Text style={styles.statLabel}>TIME</Text>
-          <Text style={[styles.statValue, { color }]}>{incident.time}</Text>
-        </View>
-        <View style={[styles.statDivider, { backgroundColor: color + '20' }]} />
-        <View style={styles.stat}>
-          <Text style={styles.statLabel}>UNITS</Text>
-          <Text style={[styles.statValue, { color }]}>{incident.units}</Text>
-        </View>
-        <View style={[styles.statDivider, { backgroundColor: color + '20' }]} />
-        <View style={styles.stat}>
-          <Text style={styles.statLabel}>ID</Text>
-          <Text style={[styles.statValue, { color }]}>{incident.id}</Text>
+        <View style={styles.meta}>
+          <Text style={[styles.codeBadge, { color: severityColor }]}>{incident.id}</Text>
+          <Text style={styles.time}>{incident.time}</Text>
         </View>
       </View>
     </TouchableOpacity>
   );
 }
 
-const styles = StyleSheet.create({
-  card: {
-    backgroundColor: Colors.panel,
-    borderRadius: 4,
-    borderWidth: 1,
-    overflow: 'hidden',
-    paddingBottom: 0,
-  },
-  glowLine: {
-    height: 2,
-    width: '100%',
-  },
-  priorityBadge: {
-    alignSelf: 'flex-start',
-    marginTop: 14,
-    marginLeft: 14,
-    paddingVertical: 4,
-    paddingHorizontal: 10,
-    borderRadius: 2,
-    borderWidth: 1,
-  },
-  priorityText: {
-    fontSize: 10,
-    fontWeight: '700',
-    fontFamily: 'monospace',
-    letterSpacing: 1.5,
-  },
-  body: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 14,
-    paddingHorizontal: 14,
-    paddingTop: 14,
-    paddingBottom: 16,
-  },
-  iconBox: {
-    width: 50,
-    height: 50,
-    borderRadius: 4,
-    borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  info: {
-    flex: 1,
-  },
-  type: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: Colors.textBright,
-    letterSpacing: 0.3,
-  },
-  location: {
-    fontSize: 12,
-    color: Colors.textSecondary,
-    fontFamily: 'monospace',
-    marginTop: 4,
-    letterSpacing: 0.5,
-  },
-  footer: {
-    flexDirection: 'row',
-    borderTopWidth: 1,
-    borderTopColor: Colors.border,
-    paddingVertical: 10,
-    paddingHorizontal: 14,
-  },
-  stat: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  statLabel: {
-    fontSize: 8,
-    fontWeight: '700',
-    fontFamily: 'monospace',
-    color: Colors.textTertiary,
-    letterSpacing: 1.5,
-    marginBottom: 3,
-  },
-  statValue: {
-    fontSize: 13,
-    fontWeight: '700',
-    fontFamily: 'monospace',
-    letterSpacing: 0.5,
-  },
-  statDivider: {
-    width: 1,
-    alignSelf: 'stretch',
-  },
-});
+function makeStyles(c) {
+  return StyleSheet.create({
+    card: {
+      backgroundColor: c.surface1,
+      borderRadius: 13,
+      borderWidth: 0.5,
+      borderColor: c.border,
+      flexDirection: 'row',
+      overflow: 'hidden',
+    },
+    severityBar: { width: 3 },
+    inner: {
+      flex: 1,
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+      padding: 12,
+    },
+    iconCol: { width: 22, alignItems: 'center' },
+    body: { flex: 1, minWidth: 0 },
+    type: { fontSize: 13, fontWeight: '500', color: c.text1 },
+    address: { fontSize: 11, color: c.text3, marginTop: 2 },
+    meta: { alignItems: 'flex-end', gap: 4 },
+    codeBadge: { fontSize: 11, fontWeight: '500', letterSpacing: 0.3 },
+    time: { fontSize: 10, color: c.text1, fontVariant: ['tabular-nums'] },
+
+    expandedInner: { flex: 1, padding: 12, gap: 10 },
+    expandedTop: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
+    expandedBody: { flex: 1, minWidth: 0, gap: 2 },
+    expandedAddress: { fontSize: 11, color: c.text2, lineHeight: 15 },
+    statsBar: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+    statVal: { fontSize: 11, fontWeight: '500', fontVariant: ['tabular-nums'] },
+    statDot: { width: 3, height: 3, borderRadius: 1.5, backgroundColor: c.text4 },
+    tagRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
+    tag: {
+      paddingVertical: 3,
+      paddingHorizontal: 8,
+      borderRadius: 999,
+      borderWidth: 0.5,
+      borderColor: c.border,
+      backgroundColor: c.surface2,
+    },
+    tagText: { fontSize: 10, color: c.text2, fontWeight: '500' },
+  });
+}

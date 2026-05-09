@@ -1,342 +1,146 @@
-/**
- * Check In Screen
- * Owner: Azealia
- * Solo Leveling system UI style.
- */
-
-import { Ionicons } from "@expo/vector-icons";
-import * as Haptics from "expo-haptics";
-import React, { useMemo, useState } from "react";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
+import React, { useMemo, useState } from 'react';
+import { SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import HamburgerButton from '../../../components/header/HamburgerButton';
-import { Colors, StatusStyles } from "../../../constants/colors";
+import { buildStatusStyles, useTheme } from '../../../constants/theme';
 
-const STATUS_KEYS = ["safe", "enroute", "onscene", "needshelp"];
+const STATUS_KEYS = ['safe', 'enroute', 'onscene', 'needshelp'];
+const STATUS_SUBLABELS = { safe: 'Safe', enroute: 'Code 2', onscene: 'Code 3', needshelp: 'Alert' };
+
+function StatusIcon({ statusKey, size = 22, color, StatusStyles }) {
+  const s = StatusStyles[statusKey];
+  if (!s) return null;
+  const iconColor = color || s.color;
+  if (s.iconLib === 'MaterialCommunityIcons')
+    return <MaterialCommunityIcons name={s.icon} size={size} color={iconColor} />;
+  return <Ionicons name={s.icon} size={size} color={iconColor} />;
+}
 
 export default function CheckInScreen() {
-  const [currentStatus, setCurrentStatus] = useState("safe");
-  const [pendingStatus, setPendingStatus] = useState(null);
-  const [info, setInfo] = useState(null);
-  const [infoType, setInfoType] = useState(null);
+  const { colors } = useTheme();
+  const StatusStyles = useMemo(() => buildStatusStyles(colors), [colors]);
+  const styles = useMemo(() => makeStyles(colors), [colors]);
+  const insets = useSafeAreaInsets();
+
+  const [currentStatus, setCurrentStatus] = useState('safe');
 
   const current = StatusStyles[currentStatus];
-
-  const pending = useMemo(() => {
-    if (!pendingStatus) return null;
-    return StatusStyles[pendingStatus];
-  }, [pendingStatus]);
 
   const onPickStatus = async (key) => {
     if (key === currentStatus) {
       await Haptics.selectionAsync();
-      setPendingStatus(null);
-      setInfo("ALREADY CURRENT STATUS");
-      setInfoType("warning");
       return;
     }
-    await Haptics.selectionAsync();
-    setInfo(null);
-    setPendingStatus(key);
-  };
-
-  const onCancel = async () => {
-    await Haptics.selectionAsync();
-    setPendingStatus(null);
-  };
-
-  const onConfirm = async () => {
-    if (!pendingStatus) return;
     await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Heavy);
-    setCurrentStatus(pendingStatus);
-    setPendingStatus(null);
-    setInfo("STATUS UPDATED · TEAM NOTIFIED");
-    setInfoType("success");
+    setCurrentStatus(key);
   };
-
-  const alertColor =
-    infoType === "success" ? Colors.success : Colors.warning;
-  const alertGlow =
-    infoType === "success" ? Colors.successGlow : Colors.warningGlow;
-  const alertBg =
-    infoType === "success" ? Colors.successFaint : Colors.warningFaint;
-  const alertIcon =
-    infoType === "success" ? "checkmark-circle" : "alert-circle";
 
   return (
-    <View style={styles.screen}>
-      <View style={styles.hamburger}>
+    <SafeAreaView style={styles.screen}>
+      <View style={{ position: 'absolute', top: insets.top + 8, left: 16, zIndex: 20 }}>
         <HamburgerButton />
-      </View> 
-      <View style={styles.content}>
-        <Text style={styles.sectionTitle}>CURRENT STATUS</Text>
+      </View>
 
-        <View style={[styles.statusPanel, { borderColor: current.color + "40" }]}>
-          <View style={[styles.statusDot, { backgroundColor: current.color }]} />
-          <Text style={[styles.statusLabel, { color: current.color }]}>
-            [{current.label}]
-          </Text>
+      <View style={styles.content}>
+        <Text style={[styles.pageTitle, { color: colors.accent }]}>What's your status?</Text>
+        <View style={[styles.heroBlock, { borderTopColor: current.color }]}>
+          <View style={styles.heroLeft}>
+            <Text style={styles.heroMicro}>Current status</Text>
+            <Text style={[styles.heroWord, { color: current.color }]}>{current.label}</Text>
+            <Text style={styles.heroMeta}>
+              {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+            </Text>
+          </View>
+          <StatusIcon statusKey={currentStatus} size={26} StatusStyles={StatusStyles} />
         </View>
 
         <View style={styles.grid}>
           {STATUS_KEYS.map((key) => {
             const s = StatusStyles[key];
             const isCurrent = key === currentStatus;
-            const isPending = key === pendingStatus;
-
             return (
               <TouchableOpacity
                 key={key}
                 style={[
                   styles.statusButton,
-                  { borderColor: s.color + (isCurrent ? "70" : "35") },
-                  isCurrent && { backgroundColor: s.bg },
-                  isPending && {
-                    shadowColor: s.color,
-                    shadowOpacity: 0.35,
-                    elevation: 10,
-                  },
+                  isCurrent && styles.statusButtonSelected,
+                  isCurrent && { borderTopColor: s.color },
+                  !isCurrent && styles.statusButtonDim,
                 ]}
                 onPress={() => onPickStatus(key)}
                 activeOpacity={0.75}
               >
-                <Text style={[styles.statusButtonText, { color: s.color }]}>
-                  {s.label}
+                {isCurrent && <View style={[styles.activeDot, { backgroundColor: s.color }]} />}
+                <StatusIcon statusKey={key} size={30} StatusStyles={StatusStyles} />
+                <Text style={[styles.btnLabel, isCurrent && { color: s.color }]}>{s.label}</Text>
+                <Text style={[styles.btnSublabel, isCurrent && { color: s.color }]}>
+                  {isCurrent ? 'Active' : STATUS_SUBLABELS[key]}
                 </Text>
-                {isCurrent && (
-                  <Text style={[styles.currentTag, { color: s.color }]}>
-                    [CURRENT]
-                  </Text>
-                )}
               </TouchableOpacity>
             );
           })}
         </View>
 
-        {pendingStatus && pending && (
-          <View style={[styles.confirmBox, { borderColor: pending.color + "50" }]}>
-            <Text style={styles.confirmText}>
-              Update status to{" "}
-              <Text style={{ color: pending.color, fontWeight: "700" }}>
-                [{pending.label}]
-              </Text>
-              ?
-            </Text>
-
-            <View style={styles.confirmRow}>
-              <TouchableOpacity style={styles.cancelBtn} onPress={onCancel}>
-                <Text style={styles.cancelText}>CANCEL</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[
-                  styles.confirmBtn,
-                  {
-                    backgroundColor: pending.bg,
-                    borderColor: pending.color + "60",
-                  },
-                ]}
-                onPress={onConfirm}
-              >
-                <Text style={[styles.confirmBtnText, { color: pending.color }]}>
-                  CONFIRM
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        )}
-
-        {!!info && (
-          <View
-            style={[
-              styles.alertBox,
-              {
-                borderColor: alertColor + "40",
-                backgroundColor: alertBg,
-              },
-            ]}
-          >
-            {/* Glow line */}
-            <View style={[styles.alertGlow, { backgroundColor: alertColor + "50" }]} />
-
-            {/* Icon circle */}
-            <View style={[styles.alertIconBox, { borderColor: alertColor + "50" }]}>
-              <Ionicons name={alertIcon} size={22} color={alertColor} />
-            </View>
-
-            <Text style={[styles.alertText, { color: alertColor }]}>
-              {info}
-            </Text>
-          </View>
-        )}
       </View>
-    </View>
+    </SafeAreaView>
   );
 }
 
-const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: Colors.bg },
-  content: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: 22,
-  },
-  sectionTitle: {
-    fontSize: 14,
-    fontWeight: "700",
-    fontFamily: "monospace",
-    color: Colors.cyan,
-    letterSpacing: 2.5,
-    marginBottom: 16,
-  },
-  statusPanel: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-    paddingVertical: 14,
-    paddingHorizontal: 18,
-    borderRadius: 4,
-    backgroundColor: Colors.panel,
-    borderWidth: 1,
-    marginBottom: 16,
-  },
-  statusDot: { width: 10, height: 10, borderRadius: 5 },
-  statusLabel: {
-    fontSize: 16,
-    fontWeight: "700",
-    fontFamily: "monospace",
-    letterSpacing: 1.5,
-  },
-
-  grid: {
-    width: "100%",
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 10,
-    justifyContent: "space-between",
-    marginTop: 4,
-  },
-  statusButton: {
-    width: "48%",
-    minHeight: 58,
-    borderRadius: 4,
-    borderWidth: 1,
-    backgroundColor: Colors.surface,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: 10,
-    shadowOffset: { width: 0, height: 8 },
-    shadowRadius: 18,
-  },
-  statusButtonText: {
-    fontSize: 12,
-    fontWeight: "800",
-    fontFamily: "monospace",
-    letterSpacing: 1.6,
-    textAlign: "center",
-  },
-  currentTag: {
-    marginTop: 4,
-    fontSize: 9,
-    fontFamily: "monospace",
-    letterSpacing: 1.4,
-    opacity: 0.9,
-  },
-
-  confirmBox: {
-    width: "100%",
-    marginTop: 60,
-    backgroundColor: Colors.panel,
-    borderWidth: 1,
-    borderRadius: 4,
-    padding: 12,
-  },
-  confirmText: {
-    color: Colors.textBright,
-    fontFamily: "monospace",
-    fontSize: 11,
-    letterSpacing: 0.6,
-    marginBottom: 10,
-    textAlign: "center",
-  },
-  confirmRow: {
-    flexDirection: "row",
-    gap: 10,
-    justifyContent: "space-between",
-  },
-  cancelBtn: {
-    flex: 1,
-    borderRadius: 4,
-    borderWidth: 1,
-    borderColor: Colors.borderStrong,
-    paddingVertical: 12,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "transparent",
-  },
-  cancelText: {
-    color: Colors.textSecondary,
-    fontSize: 11,
-    fontFamily: "monospace",
-    fontWeight: "800",
-    letterSpacing: 1.8,
-  },
-  confirmBtn: {
-    flex: 1,
-    borderRadius: 4,
-    borderWidth: 1,
-    paddingVertical: 12,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  confirmBtnText: {
-    fontSize: 11,
-    fontFamily: "monospace",
-    fontWeight: "900",
-    letterSpacing: 1.8,
-  },
-
-  alertBox: {
-    width: "100%",
-    marginTop: 60,
-    borderRadius: 4,
-    borderWidth: 1,
-    paddingVertical: 14,
-    paddingHorizontal: 14,
-    alignItems: "center",
-    gap: 10,
-    overflow: "hidden",
-  },
-  alertGlow: {
-    position: "absolute",
-    top: 0,
-    left: "15%",
-    right: "15%",
-    height: 1,
-  },
-  alertIconBox: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    borderWidth: 1.5,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  alertText: {
-    fontSize: 11,
-    fontFamily: "monospace",
-    fontWeight: "800",
-    letterSpacing: 2,
-    textAlign: "center",
-  },
-  hamburger: {
-    position: 'absolute',
-    top: 54,
-    left: 12,
-    backgroundColor: Colors.surface,
-    borderRadius: 4,
-    borderWidth: 1,
-    borderColor: Colors.cyanBorder,
-    padding: 8,
-  },
-});
+function makeStyles(c) {
+  return StyleSheet.create({
+    screen: { flex: 1, backgroundColor: c.bg },
+    content: {
+      flex: 1, alignItems: 'center', justifyContent: 'center',
+      paddingHorizontal: 20, gap: 16,
+    },
+    pageTitle: {
+      fontSize: 30, fontWeight: '500', textAlign: 'center', letterSpacing: -0.5,
+    },
+    heroBlock: {
+      width: '100%', flexDirection: 'row',
+      justifyContent: 'space-between', alignItems: 'center',
+      backgroundColor: c.surface1, borderRadius: 14,
+      borderWidth: 0.5, borderColor: c.border,
+      borderTopWidth: 1.5,
+      paddingTop: 18, paddingHorizontal: 18, paddingBottom: 16,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 8 },
+      shadowOpacity: 0.18,
+      shadowRadius: 18,
+      elevation: 8,
+    },
+    heroLeft: { gap: 2 },
+    heroMicro: { fontSize: 10, color: c.text3, letterSpacing: 0.4 },
+    heroWord: { fontSize: 30, fontWeight: '500', letterSpacing: -0.3 },
+    heroMeta: { fontSize: 11, color: c.text3, fontVariant: ['tabular-nums'] },
+    grid: {
+      width: '100%', flexDirection: 'row', flexWrap: 'wrap',
+      gap: 10, justifyContent: 'space-between',
+    },
+    statusButton: {
+      width: '48%', aspectRatio: 1.15, borderRadius: 13,
+      borderWidth: 0.5, borderColor: c.border, borderTopWidth: 0.5,
+      backgroundColor: c.surface2, padding: 11,
+      alignItems: 'center', justifyContent: 'center', gap: 5,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.12,
+      shadowRadius: 10,
+      elevation: 4,
+    },
+    statusButtonSelected: {
+      backgroundColor: c.surface1, borderTopWidth: 1.5,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 6 },
+      shadowOpacity: 0.22,
+      shadowRadius: 12,
+      elevation: 6,
+    },
+    statusButtonDim: { opacity: 0.45 },
+    activeDot: { position: 'absolute', top: 10, right: 10, width: 6, height: 6, borderRadius: 3 },
+    btnLabel: { fontSize: 13, fontWeight: '500', color: c.text1, textAlign: 'center' },
+    btnSublabel: { fontSize: 10, color: c.text3, letterSpacing: 0.4, textAlign: 'center' },
+  });
+}

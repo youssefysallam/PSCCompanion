@@ -1,520 +1,294 @@
-/**
- * Profile Screen
- * Solo Leveling system UI — user identity, ICS assignment,
- * gear readiness, certifications, and shift info.
- */
-
-import { Ionicons } from '@expo/vector-icons';
-import React from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import React, { useEffect, useMemo, useState } from 'react';
+import { SafeAreaView, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import HamburgerButton from '../../../components/header/HamburgerButton';
-import { Colors, StatusStyles } from '../../../constants/colors';
+import { buildStatusStyles, useTheme } from '../../../constants/theme';
 import { INCIDENTS, USER_PROFILE } from '../../../constants/mockData';
 
-/* ─── Section header (reusable) ─── */
-function SectionHeader({ icon, title, color = Colors.cyan }) {
+function SectionHeader({ icon, iconLib = 'Ionicons', title, colors }) {
+  const IconComp = iconLib === 'MaterialCommunityIcons' ? MaterialCommunityIcons : Ionicons;
   return (
-    <View style={[secStyles.header, { borderBottomColor: color + '15' }]}>
-      <View style={[secStyles.iconCircle, { borderColor: color }]}>
-        <Ionicons name={icon} size={12} color={color} />
-      </View>
-      <Text style={[secStyles.title, { color }]}>{title}</Text>
+    <View style={{
+      flexDirection: 'row', alignItems: 'center', gap: 9,
+      paddingVertical: 12, paddingHorizontal: 16,
+      backgroundColor: colors.surface2,
+      borderBottomWidth: 0.5, borderBottomColor: colors.border,
+    }}>
+      <IconComp name={icon} size={15} color={colors.text3} />
+      <Text style={{ fontSize: 16, fontWeight: '500', color: colors.text1 }}>{title}</Text>
     </View>
   );
 }
 
-const secStyles = StyleSheet.create({
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    paddingVertical: 10,
-    paddingHorizontal: 14,
-    borderBottomWidth: 1,
-  },
-  iconCircle: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    borderWidth: 1.5,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  title: {
-    fontSize: 11,
-    fontWeight: '700',
-    fontFamily: 'monospace',
-    letterSpacing: 2.5,
-    textTransform: 'uppercase',
-  },
-});
-
 export default function ProfileScreen() {
+  const { colors } = useTheme();
+  const StatusStyles = useMemo(() => buildStatusStyles(colors), [colors]);
+  const styles = useMemo(() => makeStyles(colors), [colors]);
+  const insets = useSafeAreaInsets();
+
   const p = USER_PROFILE;
   const s = StatusStyles[p.status] || StatusStyles.offline;
   const incident = INCIDENTS.find((i) => i.id === p.incidentId);
 
+  const [now, setNow] = useState(new Date());
+  useEffect(() => {
+    const t = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(t);
+  }, []);
+
+  const shiftDuration = 24;
+  const progress = Math.min(p.hoursOnDuty / shiftDuration, 1);
+  const hoursLeft = shiftDuration - p.hoursOnDuty;
+  const progressColor = progress < 0.5 ? colors.available : progress < 0.75 ? colors.enRoute : colors.onScene;
+
   return (
-    <View style={styles.screen}>
-      {/* Header */}
-      <View style={styles.header}>
-        <View style={styles.hamburgerRow}>
-          <HamburgerButton />
-        </View>
-        <View style={styles.headerTop}>
-          <View style={styles.headerBrand}>
-            <View style={styles.brandIcon}>
-              <Ionicons name="person" size={16} color={Colors.cyan} />
-            </View>
-            <View>
-              <Text style={styles.headerTitle}>OPERATOR PROFILE</Text>
-              <View style={styles.liveRow}>
-                <View style={[styles.liveDot, { backgroundColor: s.color }]} />
-                <Text style={[styles.liveText, { color: s.color }]}>{s.label}</Text>
-              </View>
-            </View>
-          </View>
-        </View>
+    <SafeAreaView style={styles.screen}>
+      <View style={{ position: 'absolute', top: insets.top + 8, left: 16, zIndex: 20 }}>
+        <HamburgerButton />
       </View>
 
       <ScrollView
         style={styles.scroll}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[styles.scrollContent, { paddingTop: 54 }]}
         showsVerticalScrollIndicator={false}
       >
-        {/* Identity card */}
-        <View style={[styles.panel, { borderColor: Colors.cyanBorder }]}>
-          <View style={styles.identityGlow} />
+        {/* Hero card: identity + shift clock */}
+        {/* Outer view carries the shadow (overflow:hidden would clip it) */}
+        <View style={styles.heroShadowWrap}>
+        <View style={[styles.panel, styles.heroCard]}>
+          {/* Monogram watermark — clipped naturally by overflow:hidden */}
+          <Text style={styles.heroWatermark} numberOfLines={1}>
+            {p.name.split(' ').pop()[0]}
+          </Text>
           <View style={styles.identityContent}>
-            {/* Avatar */}
-            <View style={[styles.avatar, { borderColor: s.color + '60', backgroundColor: s.bg }]}>
+            <View style={[styles.avatar, { borderColor: s.color }]}>
               <Text style={[styles.avatarText, { color: s.color }]}>
                 {p.name.split(' ').pop()[0]}
               </Text>
-              <View style={[styles.levelBadge, { borderColor: s.color + '60' }]}>
-                <Text style={[styles.levelText, { color: s.color }]}>{p.level}</Text>
+              <View style={[styles.statusRing, { borderColor: colors.surface1 }]}>
+                <View style={[styles.statusRingDot, { backgroundColor: s.color }]} />
               </View>
             </View>
-
-            {/* Info */}
             <View style={styles.identityInfo}>
-              <Text style={styles.name}>{p.name.replace('You (', '').replace(')', '')}</Text>
-              <Text style={styles.rank}>{p.rank} · {p.role}</Text>
-              <Text style={styles.station}>{p.station}</Text>
+              <Text style={styles.idName}>{p.name.replace('You (', '').replace(')', '')}</Text>
+              <Text style={styles.idRank}>{p.rank}</Text>
+              <Text style={styles.idRole}>{p.role} · {p.station}</Text>
+              <View style={[styles.statusChip, { backgroundColor: s.color + '18', borderColor: s.color + '60' }]}>
+                <View style={[styles.chipDot, { backgroundColor: s.color }]} />
+                <Text style={[styles.chipLabel, { color: s.color }]}>{s.label}</Text>
+              </View>
             </View>
           </View>
+
+          <View style={styles.heroDivider} />
+
+          <View style={styles.shiftClockRow}>
+            <Text style={styles.clockTime}>
+              {now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+            </Text>
+            <View style={styles.shiftMetaCol}>
+              <Text style={styles.shiftMetaLabel}>SHIFT</Text>
+              <Text style={styles.shiftMetaValue}>{p.shift}</Text>
+              <Text style={styles.shiftMetaSub}>{p.hoursOnDuty}h elapsed · {hoursLeft}h left</Text>
+            </View>
+          </View>
+
+          <View style={styles.clockTrack}>
+            <View style={[styles.clockFill, { width: `${progress * 100}%`, backgroundColor: progressColor }]} />
+          </View>
+        </View>
         </View>
 
         {/* ICS Assignment */}
-        <View style={[styles.panel, { borderColor: Colors.cyan + '25' }]}>
-          <SectionHeader icon="shield-checkmark" title="ICS Assignment" />
+        <View style={styles.panel}>
+          <SectionHeader icon="shield-checkmark-outline" title="ICS assignment" colors={colors} />
           <View style={styles.icsContent}>
             <View style={styles.icsRow}>
-              <Text style={styles.icsLabel}>INCIDENT</Text>
+              <Text style={styles.icsLabel}>Incident</Text>
               <View style={styles.icsValueRow}>
-                <Text style={[styles.icsValue, { color: Colors.danger }]}>
-                  {p.incidentId}
-                </Text>
+                <Text style={[styles.icsValue, { color: colors.onScene }]}>{p.incidentId}</Text>
                 <Text style={styles.icsSeparator}>·</Text>
-                <Text style={[styles.icsValue, { color: Colors.textBright }]}>
-                  {incident?.type || '—'}
-                </Text>
+                <Text style={styles.icsValue}>{incident?.type || '—'}</Text>
               </View>
             </View>
             <View style={styles.icsDivider} />
             <View style={styles.icsRow}>
-              <Text style={styles.icsLabel}>DIVISION</Text>
-              <Text style={[styles.icsValue, { color: Colors.cyan }]}>{p.division}</Text>
+              <Text style={styles.icsLabel}>Division</Text>
+              <Text style={styles.icsValue}>{p.division}</Text>
             </View>
             <View style={styles.icsDivider} />
             <View style={styles.icsRow}>
-              <Text style={styles.icsLabel}>ASSIGNMENT</Text>
-              <Text style={[styles.icsValue, { color: Colors.cyan }]}>{p.assignment}</Text>
+              <Text style={styles.icsLabel}>Assignment</Text>
+              <Text style={styles.icsValue}>{p.assignment}</Text>
             </View>
           </View>
         </View>
 
-        {/* Shift Info */}
-        <View style={[styles.panel, { borderColor: Colors.cyan + '25' }]}>
-          <SectionHeader icon="time" title="Shift Info" />
-          <View style={styles.shiftContent}>
-            <View style={styles.shiftStat}>
-              <Text style={styles.shiftStatLabel}>SHIFT</Text>
-              <Text style={styles.shiftStatValue}>{p.shift}</Text>
-            </View>
-            <View style={[styles.shiftDivider, { backgroundColor: Colors.border }]} />
-            <View style={styles.shiftStat}>
-              <Text style={styles.shiftStatLabel}>ON DUTY</Text>
-              <Text style={[styles.shiftStatValue, { color: Colors.warning }]}>
-                {p.hoursOnDuty}h
-              </Text>
-            </View>
-          </View>
-        </View>
-
-        {/* Gear Readiness */}
-        <View style={[styles.panel, { borderColor: Colors.cyan + '25' }]}>
-          <SectionHeader icon="construct" title="Gear Status" />
-          <View style={styles.gearList}>
+        {/* Gear status — 2×2 grid */}
+        <View style={styles.panel}>
+          <SectionHeader icon="construct-outline" title="Gear status" colors={colors} />
+          <View style={styles.gearGrid}>
             {p.gear.map((g, i) => {
               const isActive = g.status === 'active' || g.status === 'checked';
-              const gColor = isActive ? Colors.success : Colors.warning;
+              const gColor = isActive ? colors.available : colors.enRoute;
+              const detail = g.psi || g.channel || g.note;
               return (
-                <View
-                  key={i}
-                  style={[
-                    styles.gearRow,
-                    i < p.gear.length - 1 && { borderBottomWidth: 1, borderBottomColor: Colors.border },
-                  ]}
-                >
-                  <View style={[styles.gearIcon, { borderColor: gColor + '40', backgroundColor: gColor + '10' }]}>
+                <View key={i} style={[styles.gearTile, { borderTopColor: gColor }]}>
+                  <View style={styles.tileTitleRow}>
                     <Ionicons
-                      name={isActive ? 'checkmark' : 'time-outline'}
-                      size={14}
-                      color={gColor}
+                      name={isActive ? 'checkmark-circle-outline' : 'time-outline'}
+                      size={15} color={gColor}
                     />
+                    <View style={[styles.tilePill, { backgroundColor: gColor + '18', borderColor: gColor + '50' }]}>
+                      <Text style={[styles.tilePillText, { color: gColor }]}>
+                        {g.status.charAt(0).toUpperCase() + g.status.slice(1)}
+                      </Text>
+                    </View>
                   </View>
-                  <View style={styles.gearInfo}>
-                    <Text style={styles.gearName}>{g.item}</Text>
-                    <Text style={styles.gearDetail}>
-                      {g.psi || g.channel || g.note}
-                    </Text>
-                  </View>
-                  <View style={[styles.gearBadge, { borderColor: gColor + '40', backgroundColor: gColor + '10' }]}>
-                    <Text style={[styles.gearBadgeText, { color: gColor }]}>
-                      {g.status.toUpperCase()}
-                    </Text>
-                  </View>
+                  <Text style={styles.tileName}>{g.item}</Text>
+                  <Text style={styles.tileDetail}>{detail}</Text>
                 </View>
               );
             })}
           </View>
         </View>
 
-        {/* Certifications */}
-        <View style={[styles.panel, { borderColor: Colors.cyan + '25' }]}>
-          <SectionHeader icon="ribbon" title="Certifications" />
-          <View style={styles.certList}>
-            {p.certifications.map((c, i) => {
-              const cColor = c.active ? Colors.success : Colors.danger;
+        {/* Certifications — horizontal carousel */}
+        <View style={styles.panel}>
+          <SectionHeader icon="certificate-outline" iconLib="MaterialCommunityIcons" title="Certifications" colors={colors} />
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.certCarousel}
+          >
+            {p.certifications.map((cert, i) => {
+              const cColor = cert.active ? colors.available : colors.onScene;
               return (
-                <View
-                  key={i}
-                  style={[
-                    styles.certRow,
-                    i < p.certifications.length - 1 && { borderBottomWidth: 1, borderBottomColor: Colors.border },
-                  ]}
-                >
-                  <View style={[styles.certDot, { backgroundColor: cColor }]} />
-                  <View style={styles.certInfo}>
-                    <Text style={styles.certName}>{c.name}</Text>
-                    <Text style={styles.certExpiry}>
-                      {c.active ? 'Expires' : 'Expired'}: {c.expires}
-                    </Text>
-                  </View>
-                  <View style={[styles.certBadge, { borderColor: cColor + '40', backgroundColor: cColor + '10' }]}>
+                <View key={i} style={[styles.certCard, { borderTopColor: cColor }]}>
+                  <View style={[styles.certBadge, { backgroundColor: cColor + '18', borderColor: cColor + '50' }]}>
                     <Text style={[styles.certBadgeText, { color: cColor }]}>
-                      {c.active ? 'ACTIVE' : 'EXPIRED'}
+                      {cert.active ? 'Active' : 'Expired'}
                     </Text>
                   </View>
+                  <Text style={styles.certName}>{cert.name}</Text>
+                  <Text style={styles.certExpiry}>
+                    {cert.active ? 'Expires' : 'Expired'} {cert.expires}
+                  </Text>
                 </View>
               );
             })}
-          </View>
+          </ScrollView>
         </View>
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 }
 
-const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    backgroundColor: Colors.bg,
-  },
-  header: {
-    backgroundColor: Colors.bg,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
-    marginTop: 55,
-  },
-  hamburgerRow: {
-    paddingHorizontal: 18,
-    paddingBottom: 26,
-  },
-  headerTop: {
-    paddingHorizontal: 18,
-    paddingBottom: 12,
-  },
-  headerBrand: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    paddingBottom: 12,
-  },
-  brandIcon: {
-    width: 34,
-    height: 34,
-    borderRadius: 4,
-    backgroundColor: Colors.cyanFaint,
-    borderWidth: 1,
-    borderColor: Colors.cyanBorder,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  headerTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: Colors.textBright,
-    letterSpacing: 1.5,
-  },
-  liveRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-    marginTop: 1,
-  },
-  liveDot: {
-    width: 5,
-    height: 5,
-    borderRadius: 2.5,
-  },
-  liveText: {
-    fontSize: 8,
-    fontWeight: '700',
-    fontFamily: 'monospace',
-    letterSpacing: 1.5,
-  },
-  scroll: {
-    flex: 1,
-  },
-  scrollContent: {
-    paddingHorizontal: 14,
-    paddingBottom: 20,
-    paddingTop: 12,
-    gap: 12,
-  },
-  panel: {
-    backgroundColor: Colors.panel,
-    borderRadius: 4,
-    borderWidth: 1,
-    overflow: 'hidden',
-  },
+function makeStyles(c) {
+  return StyleSheet.create({
+    screen: { flex: 1, backgroundColor: c.bg },
+    scroll: { flex: 1 },
+    scrollContent: { paddingHorizontal: 14, paddingBottom: 20, gap: 10 },
 
-  /* Identity */
-  identityGlow: {
-    height: 2,
-    backgroundColor: Colors.cyan + '30',
-  },
-  identityContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 14,
-    padding: 14,
-  },
-  avatar: {
-    width: 56,
-    height: 56,
-    borderRadius: 4,
-    borderWidth: 2,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  avatarText: {
-    fontSize: 26,
-    fontWeight: '700',
-    fontFamily: 'monospace',
-  },
-  levelBadge: {
-    position: 'absolute',
-    bottom: -6,
-    right: -6,
-    backgroundColor: Colors.surface,
-    borderWidth: 1,
-    borderRadius: 2,
-    paddingHorizontal: 5,
-    minWidth: 22,
-    alignItems: 'center',
-  },
-  levelText: {
-    fontSize: 10,
-    fontWeight: '700',
-    fontFamily: 'monospace',
-    lineHeight: 16,
-  },
-  identityInfo: {
-    flex: 1,
-  },
-  name: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: Colors.textBright,
-    letterSpacing: 0.3,
-  },
-  rank: {
-    fontSize: 11,
-    fontFamily: 'monospace',
-    color: Colors.cyan,
-    letterSpacing: 0.5,
-    marginTop: 3,
-  },
-  station: {
-    fontSize: 10,
-    fontFamily: 'monospace',
-    color: Colors.textTertiary,
-    letterSpacing: 0.5,
-    marginTop: 2,
-  },
+    panel: {
+      backgroundColor: c.surface1, borderRadius: 13,
+      borderWidth: 0.5, borderColor: c.border, overflow: 'hidden',
+    },
+    heroShadowWrap: {
+      borderRadius: 13,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 8 },
+      shadowOpacity: 0.18,
+      shadowRadius: 18,
+      elevation: 8,
+    },
+    heroCard: {},
+    heroWatermark: {
+      position: 'absolute',
+      right: -16,
+      bottom: -36,
+      fontSize: 190,
+      fontWeight: '700',
+      color: c.text1,
+      opacity: 0.04,
+      lineHeight: 190,
+    },
 
-  /* ICS */
-  icsContent: {
-    padding: 14,
-    gap: 0,
-  },
-  icsRow: {
-    paddingVertical: 8,
-  },
-  icsLabel: {
-    fontSize: 8,
-    fontWeight: '700',
-    fontFamily: 'monospace',
-    color: Colors.textTertiary,
-    letterSpacing: 2,
-    marginBottom: 4,
-  },
-  icsValueRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  icsValue: {
-    fontSize: 13,
-    fontWeight: '700',
-    fontFamily: 'monospace',
-    letterSpacing: 0.5,
-  },
-  icsSeparator: {
-    fontSize: 13,
-    color: Colors.textTertiary,
-  },
-  icsDivider: {
-    height: 1,
-    backgroundColor: Colors.border,
-  },
+    // Hero — identity
+    identityContent: { flexDirection: 'row', alignItems: 'flex-start', gap: 16, padding: 18 },
+    avatar: {
+      width: 72, height: 72, borderRadius: 36, borderWidth: 2,
+      backgroundColor: c.surface2, alignItems: 'center', justifyContent: 'center',
+      position: 'relative', flexShrink: 0,
+    },
+    avatarText: { fontSize: 30, fontWeight: '500' },
+    statusRing: {
+      position: 'absolute', bottom: 0, right: 0,
+      width: 20, height: 20, borderRadius: 10,
+      borderWidth: 3, alignItems: 'center', justifyContent: 'center',
+    },
+    statusRingDot: { width: 11, height: 11, borderRadius: 5.5 },
+    identityInfo: { flex: 1, paddingTop: 3 },
+    idName: { fontSize: 21, fontWeight: '500', color: c.text1, marginBottom: 3 },
+    idRank: { fontSize: 13, color: c.text2, marginBottom: 2 },
+    idRole: { fontSize: 11, color: c.text3, marginBottom: 10 },
+    statusChip: {
+      flexDirection: 'row', alignItems: 'center', gap: 5, alignSelf: 'flex-start',
+      paddingVertical: 4, paddingHorizontal: 10, borderRadius: 999, borderWidth: 0.5,
+    },
+    chipDot: { width: 5, height: 5, borderRadius: 2.5 },
+    chipLabel: { fontSize: 11, fontWeight: '500' },
 
-  /* Shift */
-  shiftContent: {
-    flexDirection: 'row',
-    padding: 14,
-  },
-  shiftStat: {
-    flex: 1,
-    alignItems: 'center',
-    gap: 4,
-  },
-  shiftStatLabel: {
-    fontSize: 8,
-    fontWeight: '700',
-    fontFamily: 'monospace',
-    color: Colors.textTertiary,
-    letterSpacing: 1.5,
-  },
-  shiftStatValue: {
-    fontSize: 13,
-    fontWeight: '700',
-    fontFamily: 'monospace',
-    color: Colors.textBright,
-    letterSpacing: 0.5,
-  },
-  shiftDivider: {
-    width: 1,
-    alignSelf: 'stretch',
-  },
+    // Hero — shift clock
+    heroDivider: { height: 0.5, backgroundColor: c.border, marginHorizontal: 18 },
+    shiftClockRow: {
+      flexDirection: 'row', alignItems: 'center',
+      paddingHorizontal: 18, paddingTop: 14, paddingBottom: 14, gap: 16,
+    },
+    clockTime: {
+      fontSize: 38, fontWeight: '300', color: c.text1,
+      fontVariant: ['tabular-nums'], letterSpacing: -1,
+    },
+    shiftMetaCol: { flex: 1, gap: 2 },
+    shiftMetaLabel: { fontSize: 9, fontWeight: '500', color: c.text3, letterSpacing: 1.2 },
+    shiftMetaValue: { fontSize: 15, fontWeight: '500', color: c.text1 },
+    shiftMetaSub: { fontSize: 11, color: c.text3 },
+    clockTrack: { height: 3, backgroundColor: c.surface3 },
+    clockFill: { height: 3 },
 
-  /* Gear */
-  gearList: {},
-  gearRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    paddingVertical: 10,
-    paddingHorizontal: 14,
-  },
-  gearIcon: {
-    width: 30,
-    height: 30,
-    borderRadius: 4,
-    borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  gearInfo: {
-    flex: 1,
-  },
-  gearName: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: Colors.textBright,
-  },
-  gearDetail: {
-    fontSize: 10,
-    fontFamily: 'monospace',
-    color: Colors.textTertiary,
-    letterSpacing: 0.3,
-    marginTop: 2,
-  },
-  gearBadge: {
-    paddingVertical: 3,
-    paddingHorizontal: 8,
-    borderRadius: 2,
-    borderWidth: 1,
-  },
-  gearBadgeText: {
-    fontSize: 8,
-    fontWeight: '700',
-    fontFamily: 'monospace',
-    letterSpacing: 1,
-  },
+    // ICS
+    icsContent: { padding: 14 },
+    icsRow: { paddingVertical: 8 },
+    icsLabel: { fontSize: 10, color: c.text3, letterSpacing: 0.4, marginBottom: 4 },
+    icsValueRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+    icsValue: { fontSize: 13, fontWeight: '500', color: c.text1 },
+    icsSeparator: { fontSize: 13, color: c.text4 },
+    icsDivider: { height: 0.5, backgroundColor: c.border },
 
-  /* Certifications */
-  certList: {},
-  certRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    paddingVertical: 10,
-    paddingHorizontal: 14,
-  },
-  certDot: {
-    width: 7,
-    height: 7,
-    borderRadius: 3.5,
-  },
-  certInfo: {
-    flex: 1,
-  },
-  certName: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: Colors.textBright,
-  },
-  certExpiry: {
-    fontSize: 10,
-    fontFamily: 'monospace',
-    color: Colors.textTertiary,
-    letterSpacing: 0.3,
-    marginTop: 2,
-  },
-  certBadge: {
-    paddingVertical: 3,
-    paddingHorizontal: 8,
-    borderRadius: 2,
-    borderWidth: 1,
-  },
-  certBadgeText: {
-    fontSize: 8,
-    fontWeight: '700',
-    fontFamily: 'monospace',
-    letterSpacing: 1,
-  },
-});
+    // Gear grid
+    gearGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, padding: 12 },
+    gearTile: {
+      width: '47%', backgroundColor: c.surface2,
+      borderRadius: 10, borderWidth: 0.5, borderColor: c.border,
+      borderTopWidth: 1.5, padding: 12, gap: 6,
+    },
+    tileTitleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+    tilePill: { paddingVertical: 2, paddingHorizontal: 7, borderRadius: 999, borderWidth: 0.5 },
+    tilePillText: { fontSize: 9, fontWeight: '500' },
+    tileName: { fontSize: 14, fontWeight: '500', color: c.text1 },
+    tileDetail: { fontSize: 11, color: c.text3 },
+
+    // Certifications carousel
+    certCarousel: { paddingHorizontal: 12, paddingVertical: 12, gap: 10 },
+    certCard: {
+      width: 160, backgroundColor: c.surface2,
+      borderRadius: 10, borderWidth: 0.5, borderColor: c.border,
+      borderTopWidth: 1.5, padding: 14, gap: 8,
+    },
+    certBadge: { alignSelf: 'flex-start', paddingVertical: 3, paddingHorizontal: 8, borderRadius: 999, borderWidth: 0.5 },
+    certBadgeText: { fontSize: 10, fontWeight: '500' },
+    certName: { fontSize: 13, fontWeight: '500', color: c.text1, lineHeight: 18 },
+    certExpiry: { fontSize: 11, color: c.text3 },
+  });
+}

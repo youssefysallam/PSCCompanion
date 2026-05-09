@@ -1,87 +1,55 @@
-/**
- * Avatar — Solo Leveling system UI style.
- * Square with glowing border and level badge.
- *
- * Props:
- *   name   (string) — full name
- *   status (string) — safe | enroute | onscene | needshelp | offline
- *   level  (number) — optional level number
- *   size   (number) — optional, default 40
- */
-
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import { Colors, StatusStyles } from '../../constants/colors';
+import React, { useMemo } from 'react';
+import { StyleSheet, Text, View } from 'react-native';
+import { buildStatusStyles, useTheme } from '../../constants/theme';
 
 export default function Avatar({ name, status, level, size = 40 }) {
+  const { colors } = useTheme();
+  const StatusStyles = useMemo(() => buildStatusStyles(colors), [colors]);
   const initial = name.split(' ').pop()[0];
   const s = StatusStyles[status] || StatusStyles.offline;
+  const isOffline = status === 'offline' || !StatusStyles[status];
 
   return (
-    <View style={[styles.container, { width: size, height: size }]}>
+    <View style={{ width: size, height: size, position: 'relative' }}>
       <View
         style={[
-          styles.square,
           {
             width: size,
             height: size,
-            borderRadius: 4,
-            borderColor: s.color + '50',
-            backgroundColor: s.bg,
+            borderRadius: size / 2,
+            borderColor: isOffline ? colors.border : s.color,
+            backgroundColor: colors.surface1,
+            borderWidth: 1.5,
+            alignItems: 'center',
+            justifyContent: 'center',
           },
         ]}
       >
-        <Text
-          style={[
-            styles.initial,
-            {
-              fontSize: size * 0.42,
-              color: s.color,
-            },
-          ]}
-        >
+        <Text style={{ fontSize: size * 0.38, fontWeight: '500', color: isOffline ? colors.border : s.color }}>
           {initial}
         </Text>
       </View>
 
-      {/* Level badge */}
       {level != null && (
-        <View style={[styles.levelBadge, { borderColor: s.color + '60' }]}>
-          <Text style={[styles.levelText, { color: s.color }]}>{level}</Text>
+        <View
+          style={{
+            position: 'absolute',
+            bottom: -4,
+            right: -4,
+            backgroundColor: colors.surface1,
+            borderWidth: 1,
+            borderColor: colors.border,
+            borderRadius: 2,
+            paddingHorizontal: 4,
+            minWidth: 18,
+            alignItems: 'center',
+          }}
+        >
+          <Text style={{ fontSize: 8, fontWeight: '500', color: colors.text2, lineHeight: 14 }}>
+            {level}
+          </Text>
         </View>
       )}
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    position: 'relative',
-  },
-  square: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1.5,
-  },
-  initial: {
-    fontWeight: '700',
-    fontFamily: 'monospace',
-  },
-  levelBadge: {
-    position: 'absolute',
-    bottom: -4,
-    right: -4,
-    backgroundColor: Colors.surface,
-    borderWidth: 1,
-    borderRadius: 2,
-    paddingHorizontal: 4,
-    minWidth: 18,
-    alignItems: 'center',
-  },
-  levelText: {
-    fontSize: 8,
-    fontWeight: '700',
-    fontFamily: 'monospace',
-    lineHeight: 14,
-  },
-});
