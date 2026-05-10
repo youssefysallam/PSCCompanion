@@ -326,7 +326,7 @@ export const ALERTS = [
     status: 'active',
     requiresAction: true,
     linkedMemberId: '5',       
-    linkedCoords: { latitude: 40.7145, longitude: -74.0068 }, 
+    linkedCoords: { latitude: 40.7142, longitude: -74.0064 }, 
   },
   {
     id: '2',

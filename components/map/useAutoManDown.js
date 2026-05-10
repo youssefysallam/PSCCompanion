@@ -21,36 +21,52 @@ export function useAutoManDown({ coords, incidentId, simRunning, onTrigger }) {
   const noMovementTimer = useRef(null);
   const countdownInterval = useRef(null);
   const lastCoords = useRef(coords);
+  const warningActiveRef = useRef(false); 
+  const onTriggerRef = useRef(onTrigger);
+
+  //keep onTriggerRef fresh
+  useEffect(() => {
+    onTriggerRef.current = onTrigger;
+  }, [onTrigger]);
 
   // Clear everything
-  const reset = () => {
+  const reset = useRef(() => {
     clearTimeout(noMovementTimer.current);
     clearInterval(countdownInterval.current);
+    noMovementTimer.current = null;
+    countdownInterval.current = null;
+    warningActiveRef.current = false;
     setWarningActive(false);
     setCountdown(WARNING_COUNTDOWN_S);
-  };
+  }).current;
 
-  const dismiss = () => {
-    reset();
-  };
 
   // Start the 15-second countdown, then fire man-down
-  const startWarning = () => {
+  const startWarning = useRef(() => {
+    if (warningActiveRef.current) return;
+    warningActiveRef.current = true;
     setWarningActive(true);
     setCountdown(WARNING_COUNTDOWN_S);
-
+ 
     let remaining = WARNING_COUNTDOWN_S;
     countdownInterval.current = setInterval(() => {
       remaining -= 1;
       setCountdown(remaining);
       if (remaining <= 0) {
         clearInterval(countdownInterval.current);
+        countdownInterval.current = null;
+        warningActiveRef.current = false;
         setWarningActive(false);
-        onTrigger();
+        onTriggerRef.current?.();
       }
     }, 1000);
+  }).current;
+
+  const dismiss = () => {
+    reset();
   };
 
+  
   // Watch coords for movement — reset no-movement timer if moved
   useEffect(() => {
     if (!simRunning) {
@@ -66,30 +82,22 @@ export function useAutoManDown({ coords, incidentId, simRunning, onTrigger }) {
       lastCoords.current = coords;
       // Movement detected — reset the no-movement timer
       clearTimeout(noMovementTimer.current);
+      noMovementTimer.current = null;
     }
 
     const inDanger = isInsideDangerZone(coords, incidentId);
 
-    if (inDanger && !warningActive) {
-      // Start (or restart) the 2-minute no-movement timer
-      clearTimeout(noMovementTimer.current);
+    if (inDanger && !warningActiveRef.current && !noMovementTimer.current) {
       noMovementTimer.current = setTimeout(() => {
         startWarning();
       }, NO_MOVEMENT_MS);
     } else if (!inDanger) {
-      // Left the zone — cancel everything
       reset();
     }
-
-    return () => {
-      // Don't clear on every re-render, only on unmount
-    };
-  }, [coords, simRunning]);
-
+  }, [coords, simRunning, incidentId]);
+ 
   // Cleanup on unmount
-  useEffect(() => {
-    return () => reset();
-  }, []);
-
+  useEffect(() => () => reset(), []);
+ 
   return { warningActive, countdown, dismiss };
 }

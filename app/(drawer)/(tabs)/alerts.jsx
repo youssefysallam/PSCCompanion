@@ -2,8 +2,8 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import React, { useMemo } from 'react';
 import { SafeAreaView, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Swipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import HamburgerButton from '../../../components/header/HamburgerButton';
 import { useTheme } from '../../../constants/theme';
 import { useAlerts } from '../../../context/AlertContext';
@@ -16,21 +16,15 @@ function getTypeStyles(colors) {
   };
 }
 
-function AlertRow({ alert, updateAlertStatus, colors, styles, TYPE_STYLES }) {
+function AlertRow({ alert, updateAlertStatus, colors, styles, TYPE_STYLES, tick }) {
   const s = TYPE_STYLES[alert.type] || TYPE_STYLES.info;
   const isUrgent = alert.type === 'urgent';
   const isAcknowledged = alert.status === 'acknowledged';
   const isResolved = alert.status === 'resolved';
   const canSwipe = isUrgent && !isAcknowledged && !isResolved;
   const isBig = isUrgent && !isAcknowledged && !isResolved;
-  const [, forceUpdate] = React.useState(0);
   const swipeRef = React.useRef(null);
   const hasTriggered = React.useRef(false);
-
-  React.useEffect(() => {
-    const interval = setInterval(() => forceUpdate(n => n + 1), 30000);
-    return () => clearInterval(interval);
-  }, []);
 
   React.useEffect(() => { hasTriggered.current = false; }, [alert.status]);
 
@@ -124,6 +118,12 @@ export default function AlertsScreen() {
   const insets = useSafeAreaInsets();
   const STATUS_PRIORITY = { urgent: 0, warning: 1, info: 2 };
 
+  const [tick, setTick] = React.useState(0);
+  React.useEffect(() => {
+    const interval = setInterval(() => setTick(t => t + 1), 60000);
+    return () => clearInterval(interval);
+  }, []);
+
   const activeAlerts = alerts
     .filter(a => a.status !== 'resolved')
     .sort((a, b) => {
@@ -134,6 +134,7 @@ export default function AlertsScreen() {
     });
 
   const resolvedAlerts = alerts.filter(a => a.status === 'resolved');
+  console.log('AlertsScreen render, tick:', tick);
   return (
     <SafeAreaView style={styles.screen}>
       <View style={{ position: 'absolute', top: insets.top + 8, left: 16, zIndex: 20 }}>
@@ -148,8 +149,8 @@ export default function AlertsScreen() {
         <SectionHeader title="Active" count={activeAlerts.length} styles={styles} />
         <View style={styles.alertList}>
           {activeAlerts.map((alert) => (
-            <AlertRow key={alert.id} alert={alert} updateAlertStatus={updateAlertStatus}
-              colors={colors} styles={styles} TYPE_STYLES={TYPE_STYLES} />
+            <AlertRow key={`${alert.id}-${tick}`} alert={alert} tick={tick} updateAlertStatus={updateAlertStatus}
+            colors={colors} styles={styles} TYPE_STYLES={TYPE_STYLES} />
           ))}
         </View>
 
@@ -158,8 +159,8 @@ export default function AlertsScreen() {
             <SectionHeader title="Resolved" count={resolvedAlerts.length} styles={styles} />
             <View style={styles.alertList}>
               {resolvedAlerts.map((alert) => (
-                <AlertRow key={alert.id} alert={alert} updateAlertStatus={updateAlertStatus}
-                  colors={colors} styles={styles} TYPE_STYLES={TYPE_STYLES} />
+              <AlertRow key={`${alert.id}-${tick}`} alert={alert} tick={tick} updateAlertStatus={updateAlertStatus}
+                colors={colors} styles={styles} TYPE_STYLES={TYPE_STYLES} />
               ))}
             </View>
           </>
